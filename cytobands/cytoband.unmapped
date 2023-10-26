@@ -1,0 +1,176 @@
+#Split in new
+chr1	0	2300000	p36.33	gneg
+#Split in new
+chr1	120400000	121700000	p11.2	gneg
+#Split in new
+chr1	121700000	123400000	p11.1	acen
+#Partially deleted in new
+chr1	123400000	125100000	q11	acen
+#Split in new
+chr1	125100000	143200000	q12	gvar
+#Split in new
+chr1	143200000	147500000	q21.1	gneg
+#Split in new
+chr1	147500000	150600000	q21.2	gpos50
+#Split in new
+chr10	38000000	39800000	p11.1	acen
+#Deleted in new
+chr10	39800000	41600000	q11.1	acen
+#Split in new
+chr10	41600000	45500000	q11.21	gneg
+#Split in new
+chr11	48800000	51000000	p11.12	gpos75
+#Deleted in new
+chr11	51000000	53400000	p11.11	acen
+#Split in new
+chr11	53400000	55800000	q11	acen
+#Partially deleted in new
+chr12	33200000	35500000	p11.1	acen
+#Split in new
+chr12	35500000	37800000	q11	acen
+#Deleted in new
+chr13	0	4600000	p13	gvar
+#Deleted in new
+chr13	4600000	10100000	p12	stalk
+#Deleted in new
+chr13	10100000	16500000	p11.2	gvar
+#Deleted in new
+chr13	16500000	17700000	p11.1	acen
+#Split in new
+chr13	17700000	18900000	q11	acen
+#Split in new
+chr13	109600000	114364328	q34	gneg
+#Deleted in new
+chr14	0	3600000	p13	gvar
+#Deleted in new
+chr14	3600000	8000000	p12	stalk
+#Partially deleted in new
+chr14	8000000	16100000	p11.2	gvar
+#Partially deleted in new
+chr14	16100000	17200000	p11.1	acen
+#Deleted in new
+chr14	17200000	18200000	q11.1	acen
+#Split in new
+chr14	18200000	24100000	q11.2	gneg
+#Split in new
+chr14	103500000	107043718	q32.33	gneg
+#Deleted in new
+chr15	0	4200000	p13	gvar
+#Deleted in new
+chr15	4200000	9700000	p12	stalk
+#Deleted in new
+chr15	9700000	17500000	p11.2	gvar
+#Deleted in new
+chr15	17500000	19000000	p11.1	acen
+#Split in new
+chr15	19000000	20500000	q11.1	acen
+#Split in new
+chr15	20500000	25500000	q11.2	gneg
+#Split in new
+chr16	21200000	24200000	p12.2	gneg
+#Split in new
+chr16	28500000	35300000	p11.2	gneg
+#Split in new
+chr16	35300000	36800000	p11.1	acen
+#Deleted in new
+chr16	36800000	38400000	q11.1	acen
+#Partially deleted in new
+chr16	38400000	47000000	q11.2	gvar
+#Split in new
+chr16	88700000	90338345	q24.3	gneg
+#Split in new
+chr17	0	3400000	p13.3	gneg
+#Partially deleted in new
+chr17	22700000	25100000	p11.1	acen
+#Split in new
+chr17	25100000	27400000	q11.1	acen
+#Split in new
+chr18	15400000	18500000	p11.1	acen
+#Split in new
+chr18	18500000	21500000	q11.1	acen
+#Partially deleted in new
+chr19	24200000	26200000	p11	acen
+#Partially deleted in new
+chr19	26200000	28100000	q11	acen
+#Split in new
+chr2	83100000	91800000	p11.2	gneg
+#Split in new
+chr2	91800000	93900000	p11.1	acen
+#Split in new
+chr2	93900000	96000000	q11.1	acen
+#Split in new
+chr2	108700000	112200000	q13	gneg
+#Split in new
+chr20	25700000	28100000	p11.1	acen
+#Split in new
+chr20	28100000	30400000	q11.1	acen
+#Split in new
+chr20	30400000	33500000	q11.21	gneg
+#Deleted in new
+chr21	0	3100000	p13	gvar
+#Split in new
+chr21	3100000	7000000	p12	stalk
+#Split in new
+chr21	7000000	10900000	p11.2	gvar
+#Deleted in new
+chr21	10900000	12000000	p11.1	acen
+#Partially deleted in new
+chr21	12000000	13000000	q11.1	acen
+#Deleted in new
+chr22	0	4300000	p13	gvar
+#Deleted in new
+chr22	4300000	9400000	p12	stalk
+#Split in new
+chr22	9400000	13700000	p11.2	gvar
+#Deleted in new
+chr22	13700000	15000000	p11.1	acen
+#Split in new
+chr22	15000000	17400000	q11.1	acen
+#Split in new
+chr22	17400000	21700000	q11.21	gneg
+#Partially deleted in new
+chr3	87800000	90900000	p11.1	acen
+#Partially deleted in new
+chr3	90900000	94000000	q11.1	acen
+#Split in new
+chr3	192600000	198295559	q29	gneg
+#Split in new
+chr4	48200000	50000000	p11	acen
+#Partially deleted in new
+chr4	50000000	51800000	q11	acen
+#Split in new
+chr5	46100000	48800000	p11	acen
+#Split in new
+chr5	48800000	51400000	q11.1	acen
+#Split in new
+chr5	69100000	74000000	q13.2	gpos50
+#Split in new
+chr6	0	2300000	p25.3	gneg
+#Deleted in new
+chr6	58500000	59800000	p11.1	acen
+#Split in new
+chr6	59800000	62600000	q11.1	acen
+#Split in new
+chr7	58100000	60100000	p11.1	acen
+#Split in new
+chr7	60100000	62100000	q11.1	acen
+#Split in new
+chr7	62100000	67500000	q11.21	gneg
+#Split in new
+chr8	0	2300000	p23.3	gneg
+#Split in new
+chr8	6300000	12800000	p23.1	gneg
+#Split in new
+chr8	43200000	45200000	p11.1	acen
+#Partially deleted in new
+chr8	45200000	47200000	q11.1	acen
+#Split in new
+chr9	40000000	42200000	p11.2	gneg
+#Split in new
+chr9	43000000	45500000	q11	acen
+#Split in new
+chr9	45500000	61500000	q12	gvar
+#Split in new
+chr9	61500000	65000000	q13	gneg
+#Split in new
+chr9	65000000	69300000	q21.11	gpos25
