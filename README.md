@@ -9,14 +9,34 @@
 
 - [ideogram](#ideogram)
   - [Installation](#installation)
+  - [Example usage](#example-usage)
   - [License](#license)
   - [Cytoband data](#cytoband-data)
 
 ## Installation
 
 ```console
-pip install ideogram
+    pip install ideogram
 ```
+
+## Example usage
+
+```python
+    fig, axes = plt.subplots(
+    ncols=1,
+    nrows=22,
+    figsize=(11, 11),
+    facecolor="white",
+)
+genome = GENOME.CHM13
+for ax, contig_name in zip(axes, range(1, 23)):
+    chromosome = f"chr{contig_name}"
+    plot_ideogram(ax, target=chromosome, genome=genome)
+fig.savefig("ideogram.png", dpi=300)
+```
+
+Will output:
+![Example ideogram](ideogram.png)
 
 ## License
 
