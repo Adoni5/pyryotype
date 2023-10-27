@@ -38,7 +38,7 @@ fig.savefig("ideogram.png", dpi=300)
 ```
 
 Will output:
-![Example ideogram](ideogram.png)
+![Example ideogram](https://github.com/Adoni5/pyryotype/blob/main/ideogram.png?raw=true)
 
 ## License
 
