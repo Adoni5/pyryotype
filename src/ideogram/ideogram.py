@@ -1,12 +1,11 @@
+"""Ideogram plotting executables."""
 from enum import Enum
 from pathlib import Path
 
-# import matplotlib.pyplot as plt
-# import numpy as np
-# from matplotlib.collections import BrokenBarHCollection, PolyCollection
-# from matplotlib.patches import PathPatch, Rectangle
-# from matplotlib.path import Path
-# from matplotlib.ticker import FuncFormatter, NullFormatter
+import pandas as pd
+from matplotlib import pyplot as plt
+
+from ideogram.plotting_utils import plot_ideogram
 
 
 class GENOME(Enum):
@@ -40,11 +39,11 @@ def get_cytobands(genome: GENOME) -> Path:
     :raises ValueError: If the provided genome variant is not recognized.
 
     >>> get_cytobands(GENOME.HG38)
-    'cytoBand_HG38.tsv'
+    PosixPath('/.../ideogram/src/ideogram/static/cytobands_HG38.bed')
     >>> get_cytobands(GENOME.CHM13)
-    'cytoBand_CHM13.tsv'
+    PosixPath('/.../ideogram/src/ideogram/static/cytobands_chm13.bed')
     >>> get_cytobands(GENOME.HS1)
-    'cytoBand_HS1.tsv'
+    PosixPath('/.../ideogram/src/ideogram/static/cytobands_chm13.bed')
     >>> get_cytobands("invalid_genome")
     Traceback (most recent call last):
     ...
@@ -52,11 +51,40 @@ def get_cytobands(genome: GENOME) -> Path:
     """
     match genome:
         case GENOME.HG38:
-            return STATIC_PATH / "cytoband_HG38.bed"
+            return STATIC_PATH / "cytobands_HG38.bed"
         case GENOME.CHM13:
-            return STATIC_PATH / "cytoband_chm13.bed"
+            return STATIC_PATH / "cytobands_chm13.bed"
         case GENOME.HS1:
-            return STATIC_PATH / "cytoband_chm13.bed"
+            return STATIC_PATH / "cytobands_chm13.bed"
         case _:
             msg = f"Unknown genome: {genome}"
             raise ValueError(msg)
+
+
+def get_cytoband_df(genome: GENOME) -> pd.DataFrame:
+    """
+    Convert the cytogram file for the given genome into a dataframe.
+
+    :param genome: The genome to plot the ideogram for.
+    """
+    cytobands = pd.read_csv(
+        get_cytobands(genome), sep="\t", names=["chrom", "chromStart", "chromEnd", "name", "gieStain"]
+    )
+    cytobands["arm"] = cytobands["name"].str[0]
+    cytobands["colour"] = cytobands["gieStain"].map(COLOUR_LOOKUP)
+    cytobands["width"] = cytobands["chromEnd"] - cytobands["chromStart"]
+    return cytobands
+
+
+if __name__ == "__main__":
+    fig, axes = plt.subplots(
+        ncols=1,
+        nrows=22,
+        figsize=(11, 11),
+        facecolor="white",
+    )
+    cytoband_df = get_cytoband_df(GENOME.CHM13)
+    for ax, contig_name in zip(axes, range(1, 23)):
+        chromosome = f"chr{contig_name}"
+        plot_ideogram(ax, cytoband_df, chromosome)
+    fig.savefig("ideogram.png", dpi=300)
