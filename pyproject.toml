@@ -7,7 +7,7 @@ name = "ideogram"
 dynamic = ["version"]
 description = ''
 readme = "README.md"
-requires-python = ">=3.7"
+requires-python = ">=3.8"
 license = "MIT"
 keywords = []
 authors = [
@@ -26,7 +26,9 @@ classifiers = [
 ]
 dependencies = [
     "matplotlib",
-    "numpy"
+    "numpy",
+    "pandas",
+    "ideogram"
 ]
 
 [project.optional-dependencies]
@@ -41,55 +43,12 @@ dev = [
 ]
 
 [project.urls]
-Documentation = "https://github.com/unknown/ideogram#readme"
-Issues = "https://github.com/unknown/ideogram/issues"
-Source = "https://github.com/unknown/ideogram"
+Documentation = "https://github.com/adoni5/ideogram#readme"
+Issues = "https://github.com/adoni5/ideogram/issues"
+Source = "https://github.com/adoni5/ideogram"
 
 [tool.hatch.version]
 path = "src/ideogram/__about__.py"
-
-[tool.hatch.envs.default]
-dependencies = [
-  "coverage[toml]>=6.5",
-  "pytest",
-]
-[tool.hatch.envs.default.scripts]
-test = "pytest {args:tests}"
-test-cov = "coverage run -m pytest {args:tests}"
-cov-report = [
-  "- coverage combine",
-  "coverage report",
-]
-cov = [
-  "test-cov",
-  "cov-report",
-]
-
-[[tool.hatch.envs.all.matrix]]
-python = ["3.7", "3.8", "3.9", "3.10", "3.11"]
-
-[tool.hatch.envs.lint]
-detached = true
-dependencies = [
-  "black>=23.1.0",
-  "mypy>=1.0.0",
-  "ruff>=0.0.243",
-]
-[tool.hatch.envs.lint.scripts]
-typing = "mypy --install-types --non-interactive {args:src/ideogram tests}"
-style = [
-  "ruff {args:.}",
-  "black --check --diff {args:.}",
-]
-fmt = [
-  "black {args:.}",
-  "ruff --fix {args:.}",
-  "style",
-]
-all = [
-  "style",
-  "typing",
-]
 
 [tool.black]
 target-version = ["py37"]
@@ -152,7 +111,7 @@ ban-relative-imports = "all"
 "tests/**/*" = ["PLR2004", "S101", "TID252"]
 
 [tool.coverage.run]
-source_pkgs = ["ideogram", "tests"]
+source_pkgs = ["ideogram"]
 branch = true
 parallel = true
 omit = [
@@ -161,7 +120,6 @@ omit = [
 
 [tool.coverage.paths]
 ideogram = ["src/ideogram", "*/ideogram/src/ideogram"]
-tests = ["tests", "*/ideogram/tests"]
 
 [tool.coverage.report]
 exclude_lines = [
@@ -175,5 +133,7 @@ profile = "black"
 
 [tool.pytest.ini_options]
 testpaths = [
-    "tests/*test.py",
+    "src/ideogram/*.py"
 ]
+addopts = ["-ra", "--doctest-modules"]
+doctest_optionflags = "ELLIPSIS"
