@@ -22,7 +22,9 @@
 ## Example usage
 
 ```python
-    fig, axes = plt.subplots(
+from pyryotype import GENOME, plot_ideogram
+from matplotlib import pyplot as plt
+fig, axes = plt.subplots(
     ncols=1,
     nrows=22,
     figsize=(11, 11),

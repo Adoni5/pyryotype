@@ -28,7 +28,6 @@ dependencies = [
     "matplotlib",
     "numpy",
     "pandas",
-    "ideogram"
 ]
 
 [project.optional-dependencies]
@@ -48,7 +47,7 @@ Issues = "https://github.com/adoni5/ideogram/issues"
 Source = "https://github.com/adoni5/ideogram"
 
 [tool.hatch.version]
-path = "src/ideogram/__about__.py"
+path = "src/pyryotype/__about__.py"
 
 [tool.black]
 target-version = ["py37"]
@@ -99,6 +98,7 @@ unfixable = [
   # Don't touch unused imports
   "F401",
 ]
+exclude = ["__init__.py"]
 
 [tool.ruff.isort]
 known-first-party = ["ideogram"]
@@ -111,15 +111,15 @@ ban-relative-imports = "all"
 "tests/**/*" = ["PLR2004", "S101", "TID252"]
 
 [tool.coverage.run]
-source_pkgs = ["ideogram"]
+source_pkgs = ["pyryotype"]
 branch = true
 parallel = true
 omit = [
-  "src/ideogram/__about__.py",
+  "src/pyryotype/__about__.py",
 ]
 
 [tool.coverage.paths]
-ideogram = ["src/ideogram", "*/ideogram/src/ideogram"]
+ideogram = ["src/pyryotype"]
 
 [tool.coverage.report]
 exclude_lines = [
@@ -132,8 +132,6 @@ exclude_lines = [
 profile = "black"
 
 [tool.pytest.ini_options]
-testpaths = [
-    "src/ideogram/*.py"
-]
+
 addopts = ["-ra", "--doctest-modules"]
 doctest_optionflags = "ELLIPSIS"

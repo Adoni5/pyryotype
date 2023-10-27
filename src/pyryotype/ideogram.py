@@ -6,10 +6,10 @@ from typing import Optional
 import pandas as pd
 from matplotlib import pyplot as plt
 from matplotlib.axes import Axes
-from matplotlib.collections import BrokenBarHCollection
 from matplotlib.patches import PathPatch, Rectangle
+from matplotlib.path import Path as MplPath
 
-from ideogram.plotting_utils import set_xmargin
+from pyryotype.plotting_utils import set_xmargin
 
 
 class GENOME(Enum):
@@ -42,12 +42,12 @@ def get_cytobands(genome: GENOME) -> Path:
     :return: The path to the cytobands file associated with the provided genome variant.
     :raises ValueError: If the provided genome variant is not recognized.
 
-    >>> get_cytobands(GENOME.HG38)
-    PosixPath('/.../ideogram/src/ideogram/static/cytobands_HG38.bed')
-    >>> get_cytobands(GENOME.CHM13)
-    PosixPath('/.../ideogram/src/ideogram/static/cytobands_chm13.bed')
-    >>> get_cytobands(GENOME.HS1)
-    PosixPath('/.../ideogram/src/ideogram/static/cytobands_chm13.bed')
+    >>> get_cytobands(GENOME.HG38) # doctest: +ELLIPSIS
+    PosixPath('/.../src/pyryotype/static/cytobands_hg38.bed')
+    >>> get_cytobands(GENOME.CHM13) # doctest: +ELLIPSIS
+    PosixPath('/.../src/pyryotype/static/cytobands_chm13.bed')
+    >>> get_cytobands(GENOME.HS1) # doctest: +ELLIPSIS
+    PosixPath('/.../src/pyryotype/static/cytobands_chm13.bed')
     >>> get_cytobands("invalid_genome")
     Traceback (most recent call last):
     ...
@@ -55,7 +55,7 @@ def get_cytobands(genome: GENOME) -> Path:
     """
     match genome:
         case GENOME.HG38:
-            return STATIC_PATH / "cytobands_HG38.bed"
+            return STATIC_PATH / "cytobands_hg38.bed"
         case GENOME.CHM13:
             return STATIC_PATH / "cytobands_chm13.bed"
         case GENOME.HS1:
@@ -68,8 +68,17 @@ def get_cytobands(genome: GENOME) -> Path:
 def get_cytoband_df(genome: GENOME) -> pd.DataFrame:
     """
     Convert the cytogram file for the given genome into a dataframe.
-
     :param genome: The genome to plot the ideogram for.
+    :return: A DataFrame containing chromosome cytoband details.
+
+    >>> dummy_genome = GENOME.HG38  # replace with a test genome path or identifier
+    >>> result_df = get_cytoband_df(dummy_genome)
+    >>> result_df["chrom"].tolist()[:2]
+    ['chr1', 'chr1']
+    >>> result_df["chromStart"].tolist()[:2]
+    [0, 2300000]
+    >>> result_df["arm"].tolist()[:2]
+    ['p', 'p']
     """
     cytobands = pd.read_csv(
         get_cytobands(genome), sep="\t", names=["chrom", "chromStart", "chromEnd", "name", "gieStain"]
@@ -113,33 +122,25 @@ def plot_ideogram(
 
     :return: Updated axis object with the plotted ideogram.
 
-    >>> import pandas as pd
     >>> import matplotlib.pyplot as plt
-    >>> data = {
-    ...     "chrom": ["chr1", "chr1", "chr1"],
-    ...     "chromStart": [0, 100, 200],
-    ...     "chromEnd": [100, 200, 300],
-    ...     "gieStain": ["p", "cen", "q"],
-    ...     "colour": ["#FFFFFF", "#FF0000", "#FFFFFF"],
-    ...     "width": [100, 100, 100]
-    ... }
-    >>> df = pd.DataFrame(data)
     >>> fig, ax = plt.subplots()
-    >>> ax = plot_ideogram(ax, df, "chr1", start=50, stop=250)
+    >>> ax = plot_ideogram(ax, "chr1", start=50, stop=250)
     >>> ax.get_xlim()  # To test if the ideogram was plotted (not a direct measure but gives an idea)
-    (0.0, 1.0)
+    (-71574971.325, 256487353.7655)
     """
     # TODO: various kwds params for passing through to other methods
     df = get_cytoband_df(genome)
+    chr_names = df["chrom"].unique()
     df = df[df["chrom"].eq(target)]
+    if df.empty:
+        f"Chromsome {target} not found in cytoband data. Should be one of {chr_names}"
     yrange = (lower_anchor, height)  # lower anchor, height
     ymid = (max(yrange) - min(yrange)) / 2
     xrange = df[["chromStart", "width"]].values
     chr_len = df["chromEnd"].max()
 
     # Stain lines
-    bars = BrokenBarHCollection(xrange, yrange, facecolors=df["colour"])
-    ax.add_collection(bars)
+    ax.broken_barh(xrange, yrange, facecolors=df["colour"])
 
     # Define and draw the centromere using the rows marked as 'cen' in the 'gieStain' column
     cen_df = df[df["gieStain"].str.contains("cen")]
@@ -152,31 +153,31 @@ def plot_ideogram(
         (cen_end, lower_anchor),
         (cen_end, height),
     ]
-    cen_patch = PathPatch(Path(cen_poly), facecolor=(0.8, 0.4, 0.4), lw=0)
+    cen_patch = PathPatch(MplPath(cen_poly), facecolor=(0.8, 0.4, 0.4), lw=0)
     ax.add_patch(cen_patch)
     # Define and draw the chromosome outline, taking into account the shape around the centromere
     chr_move, chr_poly = zip(
         *[
-            (Path.MOVETO, (lower_anchor, height)),
+            (MplPath.MOVETO, (lower_anchor, height)),
             # Top left, bottom right: ‾\_
-            (Path.LINETO, (cen_start, height)),
-            (Path.LINETO, (cen_end, lower_anchor)),
-            (Path.LINETO, (chr_len, lower_anchor)),
+            (MplPath.LINETO, (cen_start, height)),
+            (MplPath.LINETO, (cen_end, lower_anchor)),
+            (MplPath.LINETO, (chr_len, lower_anchor)),
             # Right telomere: )
-            (Path.LINETO, (chr_len, lower_anchor)),
-            (Path.CURVE3, (chr_len + chr_len * curve, ymid)),
-            (Path.LINETO, (chr_len, height)),
+            (MplPath.LINETO, (chr_len, lower_anchor)),
+            (MplPath.CURVE3, (chr_len + chr_len * curve, ymid)),
+            (MplPath.LINETO, (chr_len, height)),
             # Top right, bottom left: _/‾
-            (Path.LINETO, (cen_end, height)),
-            (Path.LINETO, (cen_start, lower_anchor)),
-            (Path.LINETO, (lower_anchor, lower_anchor)),
+            (MplPath.LINETO, (cen_end, height)),
+            (MplPath.LINETO, (cen_start, lower_anchor)),
+            (MplPath.LINETO, (lower_anchor, lower_anchor)),
             # Left telomere: (
-            (Path.CURVE3, (lower_anchor - chr_len * curve, ymid)),
-            (Path.LINETO, (lower_anchor, height)),
-            (Path.CLOSEPOLY, (lower_anchor, height)),
+            (MplPath.CURVE3, (lower_anchor - chr_len * curve, ymid)),
+            (MplPath.LINETO, (lower_anchor, height)),
+            (MplPath.CLOSEPOLY, (lower_anchor, height)),
         ]
     )
-    chr_patch = PathPatch(Path(chr_poly, chr_move), fill=None, joinstyle="round")
+    chr_patch = PathPatch(MplPath(chr_poly, chr_move), fill=None, joinstyle="round")
     ax.add_patch(chr_patch)
 
     # If start and stop positions are provided, draw a rectangle to highlight this region
