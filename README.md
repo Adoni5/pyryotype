@@ -7,8 +7,10 @@
 
 **Table of Contents**
 
-- [Installation](#installation)
-- [License](#license)
+- [ideogram](#ideogram)
+  - [Installation](#installation)
+  - [License](#license)
+  - [Cytoband data](#cytoband-data)
 
 ## Installation
 
@@ -19,3 +21,7 @@ pip install ideogram
 ## License
 
 `ideogram` is distributed under the terms of the [MIT](https://spdx.org/licenses/MIT.html) license.
+
+## Cytoband data
+* HG38 - Nushell, will have to be adapted for bash `curl -L "https://hgdownload.cse.ucsc.edu/goldenpath/hg38/database/cytoBand.txt.gz" | gzip -d - | rg -Ne "^chr\\d+\t" | save cytoBand_HG38.tsv`
+* CHM13 - bash yay `curl -L http://t2t.gi.ucsc.edu/chm13/hub/t2t-chm13-v2.0/download/chm13v2.0_cytobands_allchrs.bed.gz | gzip -d - > cytobands_chm13.bed`
