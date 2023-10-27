@@ -1,13 +1,13 @@
-# ideogram
+# pyryotype
 
-[![PyPI - Version](https://img.shields.io/pypi/v/ideogram.svg)](https://pypi.org/project/ideogram)
-[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/ideogram.svg)](https://pypi.org/project/ideogram)
+[![PyPI - Version](https://img.shields.io/pypi/v/pyryotype.svg)](https://pypi.org/project/pyryotype)
+[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/pyryotype.svg)](https://pypi.org/project/pyryotype)
 
 -----
 
 **Table of Contents**
 
-- [ideogram](#ideogram)
+- [pyryotype](#pyryotype)
   - [Installation](#installation)
   - [Example usage](#example-usage)
   - [License](#license)
@@ -40,7 +40,7 @@ Will output:
 
 ## License
 
-`ideogram` is distributed under the terms of the [MIT](https://spdx.org/licenses/MIT.html) license.
+`pyryotype` is distributed under the terms of the [MIT](https://spdx.org/licenses/MIT.html) license.
 
 ## Cytoband data
 * HG38 - Nushell, will have to be adapted for bash `curl -L "https://hgdownload.cse.ucsc.edu/goldenpath/hg38/database/cytoBand.txt.gz" | gzip -d - | rg -Ne "^chr\\d+\t" | save cytoBand_HG38.tsv`
