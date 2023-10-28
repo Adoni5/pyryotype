@@ -1,5 +1,3 @@
-from typing import Optional
-
 import pandas as pd
 from matplotlib import pyplot as plt
 from matplotlib.axes import Axes
@@ -57,10 +55,10 @@ def plot_coverage(
     ax: Axes,
     df: pd.DataFrame,
     target: str,
-    regions: Optional[list[tuple[int, int]]] = None,
-    start: Optional[int] = None,
-    stop: Optional[int] = None,
-    ylabel: Optional[str] = "Coverage",
+    regions: list[tuple[int, int]] | None = None,
+    start: int | None = None,
+    stop: int | None = None,
+    ylabel: str | None = "Coverage",
     top_margin=0.1,
     bottom_margin=0,
     **kwargs,

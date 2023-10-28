@@ -1,7 +1,6 @@
 """Ideogram plotting executables."""
 from enum import Enum
 from pathlib import Path
-from typing import Optional
 
 import pandas as pd
 from matplotlib import pyplot as plt
@@ -93,8 +92,8 @@ def plot_ideogram(
     ax: Axes,
     target: str,
     genome: GENOME = GENOME.HG38,
-    start: Optional[int] = None,
-    stop: Optional[int] = None,
+    start: int | None = None,
+    stop: int | None = None,
     lower_anchor: int = 0,
     height: int = 1,
     curve: float = 0.05,
@@ -175,7 +174,8 @@ def plot_ideogram(
             (MplPath.CURVE3, (lower_anchor - chr_len * curve, ymid)),
             (MplPath.LINETO, (lower_anchor, height)),
             (MplPath.CLOSEPOLY, (lower_anchor, height)),
-        ]
+        ],
+        strict=True,
     )
     chr_patch = PathPatch(MplPath(chr_poly, chr_move), fill=None, joinstyle="round")
     ax.add_patch(chr_patch)
@@ -219,7 +219,7 @@ if __name__ == "__main__":
         facecolor="white",
     )
     genome = GENOME.CHM13
-    for ax, contig_name in zip(axes, range(1, 23)):
+    for ax, contig_name in zip(axes, range(1, 23), strict=False):
         chromosome = f"chr{contig_name}"
         plot_ideogram(ax, target=chromosome, genome=genome)
     fig.savefig("ideogram.png", dpi=300)
