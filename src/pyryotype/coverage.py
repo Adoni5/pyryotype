@@ -93,6 +93,18 @@ def plot_coverage(
     >>> fig, ax = plt.subplots()
     >>> plot_coverage(ax, df, 'chr1' )
     <...>
+    >>> plot_coverage(ax, df, 'chr1', start=2)
+    <...>
+    >>> plot_coverage(ax, df, 'chr1', stop=2)
+    <...>
+    >>> plot_coverage(ax, df, 'chr1', regions=[(1, 2)])
+    <...>
+    >>> plot_coverage(ax, df, 'chr1', regions=[(1, 2), (2, 3)])
+    <...>
+    >>> plot_coverage(ax, df, 'chr1', regions=[(1, 2), (2, 3)], start=2, stop=3)
+    <...>
+    >>> plot_coverage(ax, df, 'chr1', ylabel='Read Depth')
+    <...>
     """
     df = df[df["chromosome"].eq(target)]
     if start is not None:
