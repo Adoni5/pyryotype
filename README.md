@@ -40,6 +40,26 @@ fig.savefig("ideogram.png", dpi=300)
 Will output:
 ![Example ideogram](https://github.com/Adoni5/pyryotype/blob/main/ideogram.png?raw=true)
 
+Coverage plotting is designed to be used with the output of [Mosdepth](https://github.com/brentp/mosdepth). The following example uses the output of `mosdepth` to plot the coverage of the first 10Mb of chromosome 1 of the CHM13 genome.
+
+```python
+from pyryotype import GENOME, plot_coverage
+from matplotlib import pyplot as plt
+fig, ax = plt.subplots(
+    figsize=(11, 2),
+    facecolor="white",
+)
+plot_coverage(
+    ax,
+    "HG01280.regions.bed.gz",
+    target="chr1",
+    start=0,
+    end=10000000,
+)
+fig.savefig("coverage.png", dpi=300)
+```
+
+
 ## License
 
 `pyryotype` is distributed under the terms of the [MIT](https://spdx.org/licenses/MIT.html) license.
