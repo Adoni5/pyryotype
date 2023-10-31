@@ -124,7 +124,7 @@ def plot_ideogram(
 
     >>> import matplotlib.pyplot as plt
     >>> fig, ax = plt.subplots()
-    >>> ax = plot_ideogram(ax, "chr1", start=50, stop=250)
+    >>> ax = plot_ideogram(ax, "chr1", start=50, stop=250, y_label="Chromosome 1")
     >>> ax.get_xlim()  # To test if the ideogram was plotted (not a direct measure but gives an idea)
     (-71574971.325, 256487353.7655)
     """
