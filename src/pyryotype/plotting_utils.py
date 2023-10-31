@@ -82,6 +82,8 @@ def human_readable_yield(num: int, factor: int = 1000, suffix: str = "B") -> str
     '1.17 kiB'
     >>> human_readable_yield(1500000)
     '1.50 MB'
+    >>> human_readable_yield(1e26)
+    '100.00 YB'
     """
     for unit in ["", "k", "M", "G", "T", "P", "E", "Z"]:
         if abs(num) < factor:
@@ -91,7 +93,25 @@ def human_readable_yield(num: int, factor: int = 1000, suffix: str = "B") -> str
 
 
 @FuncFormatter
-def format_genomics_lengths(x, _pos):
+def format_genomics_lengths(x: int | float, _pos) -> str:
+    """
+    This function formats genomic lengths into a human-readable format.
+
+    :param x: The genomic length to be formatted.
+    :param _pos: A placeholder parameter required by the FuncFormatter decorator. It's not used in this function.
+    :return: Returns the input genomic length formatted into a human-readable string.
+
+    .. doctest::
+
+        >>> format_genomics_lengths(7, 0)
+        '7.00 B'
+        >>> format_genomics_lengths(1200, 0)
+        '1.20 kB'
+        >>> format_genomics_lengths(1500000, 0)
+        '1.50 MB'
+        >>> format_genomics_lengths(1e25, 0)
+        '10.00 YB'
+    """
     return f"{human_readable_yield(x)}"
 
 

@@ -59,6 +59,30 @@ INTERVAL_MIN_SIZE = 2
 
 
 class PAFProtocol(Protocol):
+    """
+    This class represents the PAF (Pairwise mApping Format) protocol. It is used to store alignment information
+    between sequences in bioinformatics.
+
+    :ivar query_name: The name of the query sequence.
+    :ivar query_length: The length of the query sequence.
+    :ivar query_start: The start position of the query in the alignment.
+    :ivar query_end: The end position of the query in the alignment.
+    :ivar strand: The strand of the target sequence.
+    :ivar target_name: The name of the target sequence.
+    :ivar target_length: The length of the target sequence.
+    :ivar target_start: The start position of the target in the alignment.
+    :ivar target_end: The end position of the target in the alignment.
+    :ivar residue_matches: The number of residue matches in the alignment.
+    :ivar alignment_block_length: The length of the alignment block.
+    :ivar mapping_quality: The mapping quality score.
+    :ivar tags: A dictionary of tag-value pairs.
+
+    :method __str__: Returns a string representation of the PAFProtocol object.
+    :method _fmt_tags: Returns a formatted string of the tags.
+    :method blast_identity: Returns the BLAST identity of the alignment.
+
+    """
+
     query_name: str
     query_length: int
     query_start: int
@@ -116,6 +140,9 @@ class PAF(PAFProtocol):
        0.9
        >>> paf._fmt_tags().replace("\\t", " ")
        'NM:Z:10 MD:Z:100'
+       >>> PAF.from_protocol(["hello"])
+       Traceback (most recent call last):
+       TypeError: Unsupported type
     """
 
     # ... [rest of the class as you've written]
@@ -412,7 +439,7 @@ def plot_paf_alignments(
         lambda x: x.target_name == target and x.mapping_quality >= mapq_filter,
         alignments,
     )
-    if strict:
+    if strict == PlotMode.STRICT:
         iterable = _collapse_multiple_mappings(iterable)
     for alignment in iterable:
         if contig_colours == PlotMode.UNIQUE_COLOURS:

@@ -127,13 +127,20 @@ def plot_ideogram(
     >>> ax = plot_ideogram(ax, "chr1", start=50, stop=250, y_label="Chromosome 1")
     >>> ax.get_xlim()  # To test if the ideogram was plotted (not a direct measure but gives an idea)
     (-71574971.325, 256487353.7655)
+
+    # Test behaviour with a non-existent chromosome
+    >>> ax = plot_ideogram(ax, "chr_1", start=50, stop=250, y_label="Chromosome 1")# doctest: +IGNORE_EXCEPTION_DETAIL
+    Traceback (most recent call last):
+    ValueError: Chromosome chr_1 not found in cytoband data. Should be one of ...
+
     """
     # TODO: various kwds params for passing through to other methods
     df = get_cytoband_df(genome)
     chr_names = df["chrom"].unique()
     df = df[df["chrom"].eq(target)]
     if df.empty:
-        f"Chromsome {target} not found in cytoband data. Should be one of {chr_names}"
+        msg = f"Chromosome {target} not found in cytoband data. Should be one of {chr_names}"
+        raise ValueError(msg)
     yrange = (lower_anchor, height)  # lower anchor, height
     ymid = (max(yrange) - min(yrange)) / 2
     xrange = df[["chromStart", "width"]].values
