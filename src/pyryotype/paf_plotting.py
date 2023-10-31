@@ -360,11 +360,22 @@ def generate_random_color():
     >>> all(0 <= val <= 255 for val in color)
     True
     """
-    return (secrets.randbelow(255), secrets.randbelow(255), secrets.randbelow(255))
+    return (secrets.randbelow(255) / 255, secrets.randbelow(255) / 255, secrets.randbelow(255) / 255)
 
 
 class PlotMode(Enum):
-    """Plotting modes for PAF alignments"""
+    """Plotting modes for PAF alignments
+
+    :ivar STRICT:
+        Collapse contigs with multiple primary mappings into one contiguous block.
+    :ivar CHILL:
+        Plot multiple mappings as separate blocks.
+    :ivar UNIQUE_COLOURS:
+        Use a unique colour for each aligned block.
+    :ivar STRAND_COLOURS:
+        Colour blocks by strand alignment.
+
+    """
 
     STRICT = 0
     CHILL = 1
