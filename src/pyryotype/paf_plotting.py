@@ -1,3 +1,33 @@
+"""
+Module to manage and process Pairwise Alignment Format (PAF) data.
+
+This module provides utilities to:
+- Parse PAF formatted data and represent it using data classes.
+- Perform various operations on PAF data such as collapsing multiple mappings, computing BLAST identities,
+  and merging overlapping intervals.
+- Visualize PAF alignments along a given target contig using Matplotlib.
+
+Constants:
+- FIELDS: A list of field names in the PAF format.
+- NA_VALUES: A list of not available values in the PAF format.
+- INTERVAL_MIN_SIZE: The minimum size of an interval to be considered for merging.
+
+Classes:
+- PAFProtocol: A protocol defining the attributes and methods for a PAF record.
+- PAF: A dataclass that implements the PAFProtocol and represents a single PAF record.
+
+Functions:
+- merge_intervals(intervals: list[tuple[int, int]]) -> list[tuple[int, int]]: Merge overlapping intervals.
+- _collapse_multiple_mappings(alignments: Iterator[PAFProtocol]) -> Iterator[PAFProtocol]:
+ Collapse multiple mappings into one.
+- generate_random_color() -> tuple[int, int, int]: Generate a random RGB color.
+- plot_paf_alignments(ax: Axes, alignments: Iterator[PAFProtocol],
+target: str, mapq_filter: int = 0, strict=False, unique_contig_colours=False) -> Axes:
+  Plot PAF alignments on a given matplotlib axis.
+
+Examples and usage details are provided in the docstrings of the respective functions and classes.
+"""
+
 import secrets
 from collections import defaultdict
 from collections.abc import Iterator
@@ -55,6 +85,41 @@ class PAFProtocol(Protocol):
 
 @dataclass
 class PAF(PAFProtocol):
+    """
+    A dataclass that represents a PAF (Pairwise mApping Format) record.
+
+    :param query_name: The name of the query sequence.
+    :param query_length: The total length of the query sequence.
+    :param query_start: Start position of alignment in query.
+    :param query_end: End position of alignment in query.
+    :param strand: Relative strand: "+" or "-".
+    :param target_name: The name of the target sequence.
+    :param target_length: The total length of the target sequence.
+    :param target_start: Start position of alignment in target.
+    :param target_end: End position of alignment in target.
+    :param residue_matches: Number of residue matches.
+    :param alignment_block_length: Block length of the alignment.
+    :param mapping_quality: Mapping quality score.
+    :param tags: A dictionary of tags in SAM format.
+
+    .. doctest::
+
+       >>> paf = PAF(
+       ...     query_name="seq1", query_length=1000, query_start=0, query_end=100,
+       ...     strand="+", target_name="seq2", target_length=2000, target_start=0,
+       ...     target_end=100, residue_matches=90, alignment_block_length=100,
+       ...     mapping_quality=60, tags={"NM": "10", "MD": "100"}
+       ... )
+       >>> str(paf).replace("\\t", " ")
+       'seq1 1000 0 100 + seq2 2000 0 100 90 100 60 NM:Z:10 MD:Z:100'
+       >>> paf.blast_identity()
+       0.9
+       >>> paf._fmt_tags().replace("\\t", " ")
+       'NM:Z:10 MD:Z:100'
+    """
+
+    # ... [rest of the class as you've written]
+
     query_name: str
     query_length: int
     query_start: int
@@ -340,6 +405,7 @@ def plot_paf_alignments(
     (0.0, 200.0)
     >>> ax.get_ylim()
     (0.0, 1.0)
+    >>> ax = plot_paf_alignments(ax, alignments, target="targetA", strict=PlotMode.UNIQUE_COLOURS)
     """
 
     iterable = filter(
