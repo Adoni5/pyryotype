@@ -101,6 +101,7 @@ def plot_ideogram(
     right_margin: float = 0.005,
     left_margin: float = 0.25,
     target_region_extent: float = 0.3,
+    y_label: str | None = None,
 ):
     """
     Plot a chromosome ideogram with cytobands and optionally highlight a specific region.
@@ -204,9 +205,10 @@ def plot_ideogram(
     ax.yaxis.set_visible(False)
 
     # Add chromosome name to the plot
-    x0, x1 = ax.get_xlim()
-    name = f"Chromosome {target.lstrip('chr')}"
-    ax.text(x0, ymid, name, fontsize="x-large", va="center")
+    if y_label is not None:
+        x0, _x1 = ax.get_xlim()
+        name = f"Chromosome {target.lstrip('chr')}"
+        ax.text(x0, ymid, name, fontsize="x-large", va="center")
 
     return ax
 
