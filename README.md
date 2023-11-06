@@ -40,7 +40,7 @@ fig.savefig("ideogram.png", dpi=300)
 ```
 
 Will output:
-![Example ideogram](https://github.com/Adoni5/pyryotype/blob/main/ideogram.png?raw=true)
+![Example ideogram](https://raw.githubusercontent.com/Adoni5/pyryotype/d724012befec0b56351d0db5125f8d9cf4df1816/example_outputs/ideogram.png?raw=true)
 
 ### Coverage plotting
 Coverage plotting is designed to be used with the output of [Mosdepth](https://github.com/brentp/mosdepth). The following example uses the output of `mosdepth` to plot the coverage of chromosome 1. The region representing the first 100Mb of the chromosome is highlighted in black.
@@ -77,6 +77,8 @@ ax.xaxis.set_major_formatter(formatter)
 fig.savefig("example_outputs/test_coverage.png", dpi=300, bbox_inches="tight")
 
 ```
+Will output something like:
+![Example Coverage](https://raw.githubusercontent.com/Adoni5/pyryotype/main/example_outputs/test_coverage.png)
 
 ### PAF plotting
 
@@ -113,13 +115,12 @@ fig.savefig("tests/test_paf_plotting.png", dpi=300, bbox_inches="tight")
 ```
 
 Will output the following image:
-![Example PAF plotting](example_outputs/test_paf_plotting.png)
-
+![Example PAF plotting](https://raw.githubusercontent.com/Adoni5/pyryotype/d724012befec0b56351d0db5125f8d9cf4df1816/example_outputs/test_paf_plotting.png?raw=true)
 The colours assigned to each alignment can be changed to either be based on the Alignment Strand, or unique for each record. See the PlotMode [docstring](https://github.com/Adoni5/pyryotype/blob/0517a8805aac7b00bdddc7d612c2c80c56b6891c/src/pyryotype/paf_plotting.py#L366) for the options that can be applied.
 
 Multiple mappings on the same chromosome can be collapsed into a single line by setting `strict=PlotMode.STRICT`.
 This can be seen in the above mappings, where the large block is comprised of 3 separate alignments, from the same read. IF `strict=PlotMode.CHILL` then each alignment will be plotted separately, even if these alignments are from the same read. This looks like:
-![Example PAF plotting chill](example_outputs/test_paf_plotting_chill.png)
+![Example PAF plotting chill](https://raw.githubusercontent.com/Adoni5/pyryotype/d724012befec0b56351d0db5125f8d9cf4df1816/example_outputs/test_paf_plotting_chill.png?raw=true)
 
 
 ## License
