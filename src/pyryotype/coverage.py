@@ -1,5 +1,4 @@
 import pandas as pd
-from matplotlib import pyplot as plt
 from matplotlib.axes import Axes
 from matplotlib.ticker import NullFormatter
 
@@ -137,15 +136,3 @@ def plot_coverage(
     ax.set_ylabel(ylabel, size="x-large")
     ax.yaxis.set_tick_params(labelsize="x-large")
     return ax
-
-
-if __name__ == "__main__":
-    fig, axes = plt.subplots(
-        ncols=1,
-        nrows=3,
-        figsize=(11, 11),
-        facecolor="white",
-    )
-    df = pd.read_csv("tests/HG01280.regions.bed.gz", sep="\t", names=["chromosome", "start", "end", "value"])
-    plot_coverage(axes[0], df, "chr1", regions=[(0, 10000000)], ylabel="Coverage", color="black")
-    fig.savefig("coverage.png", dpi=300, bbox_inches="tight", facecolor="white")

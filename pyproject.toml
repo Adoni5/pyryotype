@@ -40,7 +40,11 @@ dev = [
   "coverage[toml]>=6.5",
   "pytest",
   "isort",
-  "pre-commit"
+  "pre-commit",
+  "pyryotype[paf]"
+]
+paf = [
+  "readpaf",
 ]
 
 [project.urls]
@@ -59,6 +63,7 @@ skip-string-normalization = true
 [tool.ruff]
 target-version = "py310"
 line-length = 120
+extend-select = ["I"]
 select = [
   "A",
   "ARG",
@@ -69,7 +74,6 @@ select = [
   "EM",
   "F",
   "FBT",
-  "I",
   "ICN",
   "ISC",
   "N",
