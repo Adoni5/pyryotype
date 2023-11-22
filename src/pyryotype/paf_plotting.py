@@ -210,54 +210,59 @@ class PAF(PAFProtocol):
             raise TypeError(msg)
 
 
-def filter_extraneous_mappings(alignments: Iterator[PAFProtocol]) -> bool:
+def filter_extraneous_mappings(alignments: Iterator[PAFProtocol]) -> Iterator[PAFProtocol]:
     """
     Iterates through PAF alignments and yields each alignment that is not fully contained within another.
 
-    :param alignments:: An iterator over PAF alignment records.
+    :param alignments: An iterator over PAF alignment records.
 
-    The function checks each alignment against previously processed alignments. If an alignment's
-    start and end positions are within the range of another alignment, it is skipped. Otherwise,
-    it is yielded.
-
-    :yields
-    Iterator[PAFProtocol]: An iterator over the accepted alignments.
+    :yields: Each alignment that is not fully contained within another alignment.
 
     Examples:
     >>> from collections import namedtuple
-    >>> PAF = namedtuple('PAF', ['target_start', 'target_end'])
+    >>> PAF = namedtuple('PAF', ['query_name', 'query_length', 'query_start', 'query_end', 'strand',
+    ... 'target_name', 'target_length', 'target_start', 'target_end', 'residue_matches',
+    ... 'alignment_block_length', 'mapping_quality', 'tags'])
 
     # Simple case: Two non-overlapping alignments
-    >>> alignments = iter([PAF(10, 50), PAF(60, 100)])
+    >>> alignments = iter([PAF('seq1', 120, 10, 100, '+', 'chr1', 200, 50, 80, 30, 70, 60, {}),
+    ... PAF('seq2', 120, 10, 100, '+', 'chr1', 200, 90, 120, 30, 70, 60, {})])
     >>> list(filter_extraneous_mappings(alignments))
-    [PAF(target_start=10, target_end=50), PAF(target_start=60, target_end=100)]
+    [PAF(query_name='seq1', ...), PAF(query_name='seq2', ...)]
 
     # Case where the second alignment is contained within the first
-    >>> alignments = iter([PAF(10, 100), PAF(20, 50)])
+    >>> alignments = iter([PAF('seq1', 120, 10, 100, '+', 'chr1', 200, 50, 120, 30, 70, 60, {}),
+    ... PAF('seq2', 120, 10, 50, '+', 'chr1', 200, 70, 90, 20, 40, 60, {})])
     >>> list(filter_extraneous_mappings(alignments))
-    [PAF(target_start=10, target_end=100)]
+    [PAF(query_name='seq1', ...)]
 
     # Case with multiple alignments, some overlapping, some contained
-    >>> alignments = iter([PAF(10, 50), PAF(45, 70), PAF(20, 30), PAF(80, 120)])
+    >>> alignments = iter([PAF('seq1', 120, 10, 50, '+', 'chr1', 200, 50, 80, 30, 70, 60, {}),
+    ... PAF('seq2', 120, 20, 70, '+', 'chr1', 200, 60, 90, 30, 70, 60, {}),
+    ... PAF('seq3', 120, 30, 40, '+', 'chr1', 200, 70, 100, 20, 70, 60, {})])
     >>> list(filter_extraneous_mappings(alignments))
-    [PAF(target_start=10, target_end=50), PAF(target_start=45, target_end=70), PAF(target_start=80, target_end=120)]
+    [PAF(query_name='seq1', ...), PAF(query_name='seq2', ...), PAF(query_name='seq3', ...)]
 
     # More complex case with multiple overlaps and contained alignments
-    >>> alignments = iter([PAF(10, 50), PAF(60, 100), PAF(20, 40), PAF(70, 90), PAF(110, 150)])
+    >>> alignments = iter([PAF('seq1', 120, 10, 50, '+', 'chr1', 200, 50, 80, 30, 70, 60, {}),
+    ... PAF('seq2', 120, 60, 100, '+', 'chr1', 200, 90, 120, 30, 70, 60, {}),
+    ... PAF('seq3', 120, 20, 40, '+', 'chr1', 200, 70, 90, 20, 70, 60, {}),
+    ... PAF('seq4', 120, 110, 150, '+', 'chr1', 200, 130, 160, 30, 70, 60, {})])
     >>> list(filter_extraneous_mappings(alignments))
-    [PAF(target_start=10, target_end=50), PAF(target_start=60, target_end=100), PAF(target_start=110, target_end=150)]
+    [PAF(query_name='seq1', ...), PAF(query_name='seq2', ...), PAF(query_name='seq4', ...)]
     """
+
     accepted_mappings = []  # List to store mappings that are not fully contained within others
 
     for alignment in alignments:
         start, end = alignment.target_start, alignment.target_end
 
         # Check if this alignment is fully contained within any accepted mapping
-        if any(start >= other_start and end <= other_end for other_start, other_end in accepted_mappings):
+        if any(start >= alignment.target_start and end <= alignment.target_end for alignment in accepted_mappings):
             continue  # Skip this alignment
 
         # Add this alignment to the list of accepted mappings
-        accepted_mappings.append((start, end))
+        accepted_mappings.append(alignment)
     yield from accepted_mappings
 
 
