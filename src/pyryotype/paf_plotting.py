@@ -550,6 +550,8 @@ def plot_paf_alignments(
         lambda x: x.target_name == target and x.mapping_quality >= mapq_filter,
         alignments,
     )
+    if kwargs.get("sorted", False):
+        iterable = sorted(iterable, key=lambda x: x.target_start)
     if strict == PlotMode.STRICT:
         iterable = _collapse_multiple_mappings(iterable)
     if filter_down == PlotMode.FILTER_DOWN:
