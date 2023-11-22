@@ -56,6 +56,9 @@ FIELDS = [
 ]
 NA_VALUES = ["*"]
 INTERVAL_MIN_SIZE = 2
+CHEVRON_FORWARD = ">"
+CHEVRON_REVERSE = "<"
+CHEVRON_FONTSIZE = 10
 
 
 class PAFProtocol(Protocol):
@@ -374,13 +377,15 @@ class PlotMode(Enum):
         Use a unique colour for each aligned block.
     :ivar STRAND_COLOURS:
         Colour blocks by strand alignment.
-
+    :iver CHEVRON:
+        Plot chevron arrows representing strandedness for alignments.
     """
 
     STRICT = 0
     CHILL = 1
     UNIQUE_COLOURS = 2
     STRAND_COLOURS = 3
+    CHEVRON = 4
 
 
 def plot_paf_alignments(
@@ -390,6 +395,8 @@ def plot_paf_alignments(
     mapq_filter: int = 0,
     strict: PlotMode = PlotMode.CHILL,
     contig_colours: PlotMode = PlotMode.STRAND_COLOURS,
+    chevron: PlotMode | None = None,
+    **kwargs,
 ) -> Axes:
     """
     Plots Pairwise Alignment Format (PAF) alignments as rectangles on a matplotlib axis.
@@ -400,9 +407,12 @@ def plot_paf_alignments(
     :param filter: Map q filter, filter out any alignments under this threshold. Defaults to 0 (All alignments).
     :param strict: If STRICT, Collapse contigs with multiple primary mappings into one
       contiguous block. Defaults to CHILL, where multiple mappings are plotted as separate blocks.
-    :contig_colours: If UNIQUE_COLOURS, use a unique colour for each contig. Defaults to STRAND_COLOURS,
+    :param contig_colours: If UNIQUE_COLOURS, use a unique colour for each contig. Defaults to STRAND_COLOURS,
       where contigs coloured by strand alignment
-
+    :param chevron: If True, plot chevron arrows representing strandedness
+      for alignments. Defaults to None, where chevrons are not plotted.
+    :param **kwargs: Additional keyword arguments in order to override the default chevron
+        symbol. Options include 'chevron_symbol' and 'chevron_fontsize'.
     :return: None
 
     :note:
@@ -459,6 +469,7 @@ def plot_paf_alignments(
             colour = "#332288" if alignment.strand == "+" else "#882255"
 
         target_len = alignment.target_length
+
         target_rect = patches.Rectangle(
             (alignment.target_start, 0),
             alignment.target_end - alignment.target_start,
@@ -469,6 +480,32 @@ def plot_paf_alignments(
             visible=True,
         )
         ax.add_patch(target_rect)
+
+        # Add chevron if there's enough space
+        if chevron == PlotMode.CHEVRON:
+            strand = alignment.strand
+            chevron_symbol = ">" if strand == "+" else "<"
+            fig = ax.get_figure()
+            # Calculate the rectangle width in inches lol
+            font_size_pt = kwargs.get("chevron_fontsize", CHEVRON_FONTSIZE)  # 10 points
+
+            # Convert font size to inches (1 point = 1/72 inches)
+            font_size_inch = font_size_pt / 72
+
+            rect_width_inches = (
+                fig.dpi_scale_trans.inverted().transform(ax.transData.transform((alignment.target_end, 0)))
+                - fig.dpi_scale_trans.inverted().transform(ax.transData.transform((alignment.target_start, 0)))[0]
+            )
+            # Check if there's enough space for the chevron
+            if rect_width_inches > font_size_inch + 0.2:  # Define 'some_minimum_width' based on your requirement
+                ax.text(
+                    (alignment.target_start + alignment.target_end) / 2,  # X position (center of the rectangle)
+                    0.45,  # Y position (roughly the middle of the rectangle in height)
+                    chevron_symbol,
+                    horizontalalignment="center",
+                    verticalalignment="center",
+                    fontsize=10,  # Adjust fontsize as needed
+                )
 
     ax.set_xlim((0, target_len))
     ax.set_ylim((0, 1))
