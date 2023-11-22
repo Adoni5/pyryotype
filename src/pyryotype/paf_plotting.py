@@ -59,6 +59,7 @@ INTERVAL_MIN_SIZE = 2
 CHEVRON_FORWARD = ">"
 CHEVRON_REVERSE = "<"
 CHEVRON_FONTSIZE = 20
+MAX_TRACKS = 10
 
 
 class PAFProtocol(Protocol):
@@ -437,7 +438,8 @@ class PlotMode(Enum):
         Plot chevron arrows representing strandedness for alignments.
     :ivar FILTER_DOWN:
         Filter out alignments that are fully contained within another alignment.
-
+    :ivar EXPAND_OVERLAPS:
+        Expand overlapping alignments into their own unique track
     """
 
     STRICT = 0
@@ -446,6 +448,7 @@ class PlotMode(Enum):
     STRAND_COLOURS = 3
     CHEVRON = 4
     FILTER_DOWN = 5
+    EXPAND_OVERLAPS = 6
 
 
 def plot_paf_alignments(
@@ -457,6 +460,7 @@ def plot_paf_alignments(
     contig_colours: PlotMode = PlotMode.STRAND_COLOURS,
     chevron: PlotMode | None = None,
     filter_down: PlotMode | None = None,
+    expand_overlaps: PlotMode | None = None,
     **kwargs,
 ) -> Axes:
     """
@@ -550,6 +554,14 @@ def plot_paf_alignments(
         iterable = _collapse_multiple_mappings(iterable)
     if filter_down == PlotMode.FILTER_DOWN:
         iterable = filter_extraneous_mappings(iterable)
+    # If we are expanding overlaps we will use this to track where to draw the bottom left rect
+    # from
+    current_y = 0
+    # Upper limit on the track
+    max_y = 0.9
+    kwargs.get("max_tracks", MAX_TRACKS)
+    # How much to step by
+    dy = max_y / MAX_TRACKS if expand_overlaps == PlotMode.EXPAND_OVERLAPS else max_y
     for alignment in iterable:
         if contig_colours == PlotMode.UNIQUE_COLOURS:
             colour = generate_random_color()
@@ -559,15 +571,21 @@ def plot_paf_alignments(
         target_len = alignment.target_length
 
         target_rect = patches.Rectangle(
-            (alignment.target_start, 0),
+            (alignment.target_start, current_y),
             alignment.target_end - alignment.target_start,
-            0.9,
+            dy,
             edgecolor=None,
             facecolor=colour,
             fill=True,
             visible=True,
+            zorder=1,
         )
         ax.add_patch(target_rect)
+        if expand_overlaps == PlotMode.EXPAND_OVERLAPS:
+            current_y += dy
+            # If we are at the top of the track, reset the y position
+            if current_y == max_y:
+                current_y = 0
 
         # Add chevron if there's enough space
         if chevron == PlotMode.CHEVRON:
@@ -588,7 +606,7 @@ def plot_paf_alignments(
             )[0]
             # print(f"rect_width_inches: {rect_width_inches}")
             # Check if there's enough space for the chevron
-            if rect_width_inches > font_size_inch + 0.1:  # Define 'some_minimum_width' based on your requirement
+            if rect_width_inches > font_size_inch + 0.05:  # Define 'some_minimum_width' based on your requirement
                 # print("drawing chevron")
                 ax.text(
                     (alignment.target_start + alignment.target_end) / 2,  # X position (center of the rectangle)
@@ -597,6 +615,7 @@ def plot_paf_alignments(
                     horizontalalignment="center",
                     verticalalignment="center",
                     fontsize=font_size_pt,  # Adjust fontsize as needed
+                    zorder=2,
                 )
 
     ax.set_xlim((0, target_len))
