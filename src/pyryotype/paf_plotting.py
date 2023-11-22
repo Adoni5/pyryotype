@@ -428,8 +428,11 @@ class PlotMode(Enum):
         Use a unique colour for each aligned block.
     :ivar STRAND_COLOURS:
         Colour blocks by strand alignment.
-    :iver CHEVRON:
+    :ivar CHEVRON:
         Plot chevron arrows representing strandedness for alignments.
+    :ivar FILTER_DOWN:
+        Filter out alignments that are fully contained within another alignment.
+
     """
 
     STRICT = 0
@@ -437,6 +440,7 @@ class PlotMode(Enum):
     UNIQUE_COLOURS = 2
     STRAND_COLOURS = 3
     CHEVRON = 4
+    FILTER_DOWN = 5
 
 
 def plot_paf_alignments(
