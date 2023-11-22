@@ -58,7 +58,7 @@ NA_VALUES = ["*"]
 INTERVAL_MIN_SIZE = 2
 CHEVRON_FORWARD = ">"
 CHEVRON_REVERSE = "<"
-CHEVRON_FONTSIZE = 10
+CHEVRON_FONTSIZE = 20
 
 
 class PAFProtocol(Protocol):
@@ -431,6 +431,7 @@ def plot_paf_alignments(
 
     # Now add 2 contigs (seq1 and seq2) and set strict to false ( collapse contigs with multiple mappings )
     >>> import matplotlib.pyplot as plt
+    >>> import matplotlib
     >>> from collections import namedtuple
 
     >>> PAF = namedtuple('PAF', ['query_name', 'query_length', 'query_start', 'query_end', 'strand', 'target_name',
@@ -454,6 +455,29 @@ def plot_paf_alignments(
     >>> ax.get_ylim()
     (0.0, 1.0)
     >>> ax = plot_paf_alignments(ax, alignments, target="targetA", strict=PlotMode.UNIQUE_COLOURS)
+
+    >>> fig, ax = plt.subplots(figsize=(4,1))
+    >>> ax.set_xlim((0,500))
+    (0.0, 500.0)
+    >>> alignments = [
+    ...     PAF(query_name='seq1', query_length=120, query_start=10, query_end=100, strand='+',
+    ... target_name='chr1', target_length=200, target_start=50, target_end=150, residue_matches=30,
+    ... alignment_block_length=70, mapping_quality=60, tags={}),
+    ...     PAF(query_name='seq2', query_length=120, query_start=10, query_end=11, strand='-',
+    ... target_name='chr1', target_length=1000, target_start=90, target_end=91, residue_matches=10,
+    ... alignment_block_length=5, mapping_quality=60, tags={})
+    ... ]
+    >>> plot_paf_alignments(ax, iter(alignments), "chr1", chevron=PlotMode.CHEVRON)
+    <Axes: xlabel='Position'>
+
+    # Check chevron is drawn for seq1 (enough space)
+    >>> text_objs = [obj for obj in ax.get_children() if isinstance(obj, matplotlib.text.Text)]
+    >>> any(">" in obj.get_text() for obj in text_objs)
+    True
+
+    # Check chevron is not drawn for seq2 (not enough space)
+    >>> any("<" in obj.get_text() for obj in text_objs)
+    False
     """
 
     iterable = filter(
@@ -491,20 +515,24 @@ def plot_paf_alignments(
 
             # Convert font size to inches (1 point = 1/72 inches)
             font_size_inch = font_size_pt / 72
-
+            # print(fig.get_size_inches())
+            # print(f"font_size_inch: {font_size_inch}")
+            # print(fig.dpi_scale_trans.inverted().transform(ax.transData.transform((alignment.target_end, 0))))
             rect_width_inches = (
                 fig.dpi_scale_trans.inverted().transform(ax.transData.transform((alignment.target_end, 0)))
-                - fig.dpi_scale_trans.inverted().transform(ax.transData.transform((alignment.target_start, 0)))[0]
-            )
+                - fig.dpi_scale_trans.inverted().transform(ax.transData.transform((alignment.target_start, 0)))
+            )[0]
+            # print(f"rect_width_inches: {rect_width_inches}")
             # Check if there's enough space for the chevron
-            if rect_width_inches > font_size_inch + 0.2:  # Define 'some_minimum_width' based on your requirement
+            if rect_width_inches > font_size_inch + 0.1:  # Define 'some_minimum_width' based on your requirement
+                # print("drawing chevron")
                 ax.text(
                     (alignment.target_start + alignment.target_end) / 2,  # X position (center of the rectangle)
                     0.45,  # Y position (roughly the middle of the rectangle in height)
                     chevron_symbol,
                     horizontalalignment="center",
                     verticalalignment="center",
-                    fontsize=10,  # Adjust fontsize as needed
+                    fontsize=font_size_pt,  # Adjust fontsize as needed
                 )
 
     ax.set_xlim((0, target_len))
