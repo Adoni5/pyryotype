@@ -586,7 +586,7 @@ def plot_paf_alignments(
         if expand_overlaps == PlotMode.EXPAND_OVERLAPS:
             current_y += dy
             # If we are at the top of the track, reset the y position
-            if current_y == max_y:
+            if current_y >= max_y:
                 current_y = 0
 
         # Add chevron if there's enough space
