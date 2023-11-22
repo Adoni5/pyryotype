@@ -210,6 +210,57 @@ class PAF(PAFProtocol):
             raise TypeError(msg)
 
 
+def filter_extraneous_mappings(alignments: Iterator[PAFProtocol]) -> bool:
+    """
+    Iterates through PAF alignments and yields each alignment that is not fully contained within another.
+
+    :param alignments:: An iterator over PAF alignment records.
+
+    The function checks each alignment against previously processed alignments. If an alignment's
+    start and end positions are within the range of another alignment, it is skipped. Otherwise,
+    it is yielded.
+
+    :yields
+    Iterator[PAFProtocol]: An iterator over the accepted alignments.
+
+    Examples:
+    >>> from collections import namedtuple
+    >>> PAF = namedtuple('PAF', ['target_start', 'target_end'])
+
+    # Simple case: Two non-overlapping alignments
+    >>> alignments = iter([PAF(10, 50), PAF(60, 100)])
+    >>> list(filter_extraneous_mappings(alignments))
+    [PAF(target_start=10, target_end=50), PAF(target_start=60, target_end=100)]
+
+    # Case where the second alignment is contained within the first
+    >>> alignments = iter([PAF(10, 100), PAF(20, 50)])
+    >>> list(filter_extraneous_mappings(alignments))
+    [PAF(target_start=10, target_end=100)]
+
+    # Case with multiple alignments, some overlapping, some contained
+    >>> alignments = iter([PAF(10, 50), PAF(45, 70), PAF(20, 30), PAF(80, 120)])
+    >>> list(filter_extraneous_mappings(alignments))
+    [PAF(target_start=10, target_end=50), PAF(target_start=45, target_end=70), PAF(target_start=80, target_end=120)]
+
+    # More complex case with multiple overlaps and contained alignments
+    >>> alignments = iter([PAF(10, 50), PAF(60, 100), PAF(20, 40), PAF(70, 90), PAF(110, 150)])
+    >>> list(filter_extraneous_mappings(alignments))
+    [PAF(target_start=10, target_end=50), PAF(target_start=60, target_end=100), PAF(target_start=110, target_end=150)]
+    """
+    accepted_mappings = []  # List to store mappings that are not fully contained within others
+
+    for alignment in alignments:
+        start, end = alignment.target_start, alignment.target_end
+
+        # Check if this alignment is fully contained within any accepted mapping
+        if any(start >= other_start and end <= other_end for other_start, other_end in accepted_mappings):
+            continue  # Skip this alignment
+
+        # Add this alignment to the list of accepted mappings
+        accepted_mappings.append((start, end))
+    yield from accepted_mappings
+
+
 def merge_intervals(intervals: list[tuple[int, int]]) -> list[tuple[int, int]]:
     """
     Merge the given intervals, returning collapsed intervals.
@@ -396,6 +447,7 @@ def plot_paf_alignments(
     strict: PlotMode = PlotMode.CHILL,
     contig_colours: PlotMode = PlotMode.STRAND_COLOURS,
     chevron: PlotMode | None = None,
+    filter_down: PlotMode | None = None,
     **kwargs,
 ) -> Axes:
     """
@@ -411,6 +463,7 @@ def plot_paf_alignments(
       where contigs coloured by strand alignment
     :param chevron: If True, plot chevron arrows representing strandedness
       for alignments. Defaults to None, where chevrons are not plotted.
+    :param filter_down: If True, filter out alignments that are fully contained within another alignment.
     :param **kwargs: Additional keyword arguments in order to override the default chevron
         symbol. Options include 'chevron_symbol' and 'chevron_fontsize'.
     :return: None
@@ -486,6 +539,8 @@ def plot_paf_alignments(
     )
     if strict == PlotMode.STRICT:
         iterable = _collapse_multiple_mappings(iterable)
+    if filter_down == PlotMode.FILTER_DOWN:
+        iterable = filter_extraneous_mappings(iterable)
     for alignment in iterable:
         if contig_colours == PlotMode.UNIQUE_COLOURS:
             colour = generate_random_color()
