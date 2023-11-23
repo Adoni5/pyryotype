@@ -483,7 +483,7 @@ def _choose_track_with_min_overlap(start: int, end: int, tracks: list[list[tuple
     # Initialize tracks (each track is a list of (start, end) tuples)
     track_found = False
     # First, try to find a track without any overlap
-    for track in tracks:
+    for track_index, track in enumerate(tracks):  # noqa: B007
         if not any(start < existing_end and end > existing_start for existing_start, existing_end in track):
             # Place the rectangle in this track without overlap
             track.append((start, end))
@@ -494,14 +494,14 @@ def _choose_track_with_min_overlap(start: int, end: int, tracks: list[list[tuple
         min_overlap = float("inf")
         selected_track = 0
 
-        for track_idx, track in enumerate(tracks):
+        for track_index, track in enumerate(tracks):
             overlap = sum(
                 max(0, min(end, existing_end) - max(start, existing_start)) for existing_start, existing_end in track
             )
 
             if overlap < min_overlap:
                 min_overlap = overlap
-                selected_track = track_idx
+                selected_track = track_index
 
         # Add to the track with minimum overlap
         tracks[selected_track].append((start, end))
