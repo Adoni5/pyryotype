@@ -451,6 +451,64 @@ class PlotMode(Enum):
     EXPAND_OVERLAPS = 6
 
 
+def _choose_track_with_min_overlap(start: int, end: int, tracks: list[list[tuple[int, int]]]) -> int:
+    """
+    Chooses a track with minimum overlap for a new rectangle defined by start and end.
+
+    If a track with no overlap is found, the rectangle is placed in this track. Otherwise,
+    the track with the least overlap is chosen.
+
+    Parameters:
+    start (int): Start position of the new rectangle.
+    end (int): End position of the new rectangle.
+    tracks (list[list[tuple[int, int]]]): A list of tracks, each track being a list of rectangles
+                                          represented as (start, end) tuples.
+
+    Returns:
+    int: The index of the chosen track.
+
+    Examples:
+    >>> tracks = [[(0, 10), (20, 30)], [(10, 15)], [(30, 40)]]
+    >>> _choose_track_with_min_overlap(12, 22, tracks)
+    2
+    >>> tracks  # The new rectangle (12, 22) is placed in track index 2 as it has the zero overlap
+    [[(0, 10), (20, 30)], [(10, 15)], [(30, 40), (12, 22)]]
+
+    >>> tracks = [[(0, 10)], [(10, 20)], [(20, 30)]]
+    >>> _choose_track_with_min_overlap(5, 25, tracks)
+    0
+    >>> tracks  # The new rectangle (5, 25) is placed in track 0 as it the first track with the least overlap
+    [[(0, 10), (5, 25)], [(10, 20)], [(20, 30)]]
+    """
+    # Initialize tracks (each track is a list of (start, end) tuples)
+    track_found = False
+    # First, try to find a track without any overlap
+    for track in tracks:
+        if not any(start < existing_end and end > existing_start for existing_start, existing_end in track):
+            # Place the rectangle in this track without overlap
+            track.append((start, end))
+            track_found = True
+            break
+    # If no free track is found, select track with minimum overlap
+    if not track_found:
+        min_overlap = float("inf")
+        selected_track = 0
+
+        for track_idx, track in enumerate(tracks):
+            overlap = sum(
+                max(0, min(end, existing_end) - max(start, existing_start)) for existing_start, existing_end in track
+            )
+
+            if overlap < min_overlap:
+                min_overlap = overlap
+                selected_track = track_idx
+
+        # Add to the track with minimum overlap
+        tracks[selected_track].append((start, end))
+        track_index = selected_track
+    return track_index
+
+
 def plot_paf_alignments(
     ax: Axes,
     alignments: Iterator[PAFProtocol],
@@ -556,25 +614,27 @@ def plot_paf_alignments(
         iterable = sorted(iterable, key=lambda x: x.target_start)
     if filter_down == PlotMode.FILTER_DOWN:
         iterable = filter_extraneous_mappings(iterable)
-    # If we are expanding overlaps we will use this to track where to draw the bottom left rect
-    # from
-    current_y = 0
+
     # Upper limit on the track
     max_y = 0.9
-    kwargs.get("max_tracks", MAX_TRACKS)
+    max_tracks = kwargs.get("max_tracks", MAX_TRACKS)
     # How much to step by
     dy = max_y / MAX_TRACKS if expand_overlaps == PlotMode.EXPAND_OVERLAPS else max_y
+    # Track which start stop are in use for each track
+    tracks = [[] for _ in range(max_tracks)]
     for alignment in iterable:
         if contig_colours == PlotMode.UNIQUE_COLOURS:
             colour = generate_random_color()
         else:
             colour = "#332288" if alignment.strand == "+" else "#882255"
-
+        start, end = alignment.target_start, alignment.target_end
         target_len = alignment.target_length
-
+        track_index = 0
+        if expand_overlaps == PlotMode.EXPAND_OVERLAPS:
+            track_index = _choose_track_with_min_overlap(start, end, tracks)
         target_rect = patches.Rectangle(
-            (alignment.target_start, current_y),
-            alignment.target_end - alignment.target_start,
+            (start, dy * track_index),
+            end - start,
             dy,
             edgecolor=None,
             facecolor=colour,
@@ -583,12 +643,6 @@ def plot_paf_alignments(
             zorder=1,
         )
         ax.add_patch(target_rect)
-        if expand_overlaps == PlotMode.EXPAND_OVERLAPS:
-            current_y += dy
-            # If we are at the top of the track, reset the y position
-            if current_y >= max_y:
-                current_y = 0
-
         # Add chevron if there's enough space
         if chevron == PlotMode.CHEVRON:
             strand = alignment.strand
