@@ -56,6 +56,10 @@ FIELDS = [
 ]
 NA_VALUES = ["*"]
 INTERVAL_MIN_SIZE = 2
+CHEVRON_FORWARD = ">"
+CHEVRON_REVERSE = "<"
+CHEVRON_FONTSIZE = 20
+MAX_TRACKS = 10
 
 
 class PAFProtocol(Protocol):
@@ -205,6 +209,62 @@ class PAF(PAFProtocol):
         else:
             msg = "Unsupported type"
             raise TypeError(msg)
+
+
+def filter_extraneous_mappings(alignments: Iterator[PAFProtocol]) -> Iterator[PAFProtocol]:
+    """
+    Iterates through PAF alignments and yields each alignment that is not fully contained within another.
+
+    :param alignments: An iterator over PAF alignment records.
+
+    :yields: Each alignment that is not fully contained within another alignment.
+
+    Examples:
+    >>> from collections import namedtuple
+    >>> PAF = namedtuple('PAF', ['query_name', 'query_length', 'query_start', 'query_end', 'strand',
+    ... 'target_name', 'target_length', 'target_start', 'target_end', 'residue_matches',
+    ... 'alignment_block_length', 'mapping_quality', 'tags'])
+
+    # Simple case: Two non-overlapping alignments
+    >>> alignments = iter([PAF('seq1', 120, 10, 100, '+', 'chr1', 200, 50, 80, 30, 70, 60, {}),
+    ... PAF('seq2', 120, 10, 100, '+', 'chr1', 200, 90, 120, 30, 70, 60, {})])
+    >>> list(filter_extraneous_mappings(alignments))
+    [PAF(query_name='seq1', ...), PAF(query_name='seq2', ...)]
+
+    # Case where the second alignment is contained within the first
+    >>> alignments = iter([PAF('seq1', 120, 10, 100, '+', 'chr1', 200, 50, 120, 30, 70, 60, {}),
+    ... PAF('seq2', 120, 10, 50, '+', 'chr1', 200, 70, 90, 20, 40, 60, {})])
+    >>> list(filter_extraneous_mappings(alignments))
+    [PAF(query_name='seq1', ...)]
+
+    # Case with multiple alignments, some overlapping, some contained
+    >>> alignments = iter([PAF('seq1', 120, 10, 50, '+', 'chr1', 200, 50, 80, 30, 70, 60, {}),
+    ... PAF('seq2', 120, 20, 70, '+', 'chr1', 200, 60, 90, 30, 70, 60, {}),
+    ... PAF('seq3', 120, 30, 40, '+', 'chr1', 200, 70, 100, 20, 70, 60, {})])
+    >>> list(filter_extraneous_mappings(alignments))
+    [PAF(query_name='seq1', ...), PAF(query_name='seq2', ...), PAF(query_name='seq3', ...)]
+
+    # More complex case with multiple overlaps and contained alignments
+    >>> alignments = iter([PAF('seq1', 120, 10, 50, '+', 'chr1', 200, 50, 80, 30, 70, 60, {}),
+    ... PAF('seq2', 120, 60, 100, '+', 'chr1', 200, 90, 120, 30, 70, 60, {}),
+    ... PAF('seq3', 120, 20, 40, '+', 'chr1', 200, 70, 90, 20, 70, 60, {}),
+    ... PAF('seq4', 120, 110, 150, '+', 'chr1', 200, 130, 160, 30, 70, 60, {})])
+    >>> list(filter_extraneous_mappings(alignments))
+    [PAF(query_name='seq1', ...), PAF(query_name='seq2', ...), PAF(query_name='seq4', ...)]
+    """
+
+    accepted_mappings = []  # List to store mappings that are not fully contained within others
+
+    for alignment in alignments:
+        start, end = alignment.target_start, alignment.target_end
+
+        # Check if this alignment is fully contained within any accepted mapping
+        if any(start >= alignment.target_start and end <= alignment.target_end for alignment in accepted_mappings):
+            continue  # Skip this alignment
+
+        # Add this alignment to the list of accepted mappings
+        accepted_mappings.append(alignment)
+    yield from accepted_mappings
 
 
 def merge_intervals(intervals: list[tuple[int, int]]) -> list[tuple[int, int]]:
@@ -374,13 +434,79 @@ class PlotMode(Enum):
         Use a unique colour for each aligned block.
     :ivar STRAND_COLOURS:
         Colour blocks by strand alignment.
-
+    :ivar CHEVRON:
+        Plot chevron arrows representing strandedness for alignments.
+    :ivar FILTER_DOWN:
+        Filter out alignments that are fully contained within another alignment.
+    :ivar EXPAND_OVERLAPS:
+        Expand overlapping alignments into their own unique track
     """
 
     STRICT = 0
     CHILL = 1
     UNIQUE_COLOURS = 2
     STRAND_COLOURS = 3
+    CHEVRON = 4
+    FILTER_DOWN = 5
+    EXPAND_OVERLAPS = 6
+
+
+def _choose_track_with_min_overlap(start: int, end: int, tracks: list[list[tuple[int, int]]]) -> int:
+    """
+    Chooses a track with minimum overlap for a new rectangle defined by start and end.
+
+    If a track with no overlap is found, the rectangle is placed in this track. Otherwise,
+    the track with the least overlap is chosen.
+
+    Parameters:
+    start (int): Start position of the new rectangle.
+    end (int): End position of the new rectangle.
+    tracks (list[list[tuple[int, int]]]): A list of tracks, each track being a list of rectangles
+                                          represented as (start, end) tuples.
+
+    Returns:
+    int: The index of the chosen track.
+
+    Examples:
+    >>> tracks = [[(0, 10), (20, 30)], [(10, 15)], [(30, 40)]]
+    >>> _choose_track_with_min_overlap(12, 22, tracks)
+    2
+    >>> tracks  # The new rectangle (12, 22) is placed in track index 2 as it has the zero overlap
+    [[(0, 10), (20, 30)], [(10, 15)], [(30, 40), (12, 22)]]
+
+    >>> tracks = [[(0, 10)], [(10, 20)], [(20, 30)]]
+    >>> _choose_track_with_min_overlap(5, 25, tracks)
+    0
+    >>> tracks  # The new rectangle (5, 25) is placed in track 0 as it the first track with the least overlap
+    [[(0, 10), (5, 25)], [(10, 20)], [(20, 30)]]
+    """
+    # Initialize tracks (each track is a list of (start, end) tuples)
+    track_found = False
+    # First, try to find a track without any overlap
+    for track_index, track in enumerate(tracks):  # noqa: B007
+        if not any(start < existing_end and end > existing_start for existing_start, existing_end in track):
+            # Place the rectangle in this track without overlap
+            track.append((start, end))
+            track_found = True
+            break
+    # If no free track is found, select track with minimum overlap
+    if not track_found:
+        min_overlap = float("inf")
+        selected_track = 0
+
+        for track_index, track in enumerate(tracks):
+            overlap = sum(
+                max(0, min(end, existing_end) - max(start, existing_start)) for existing_start, existing_end in track
+            )
+
+            if overlap < min_overlap:
+                min_overlap = overlap
+                selected_track = track_index
+
+        # Add to the track with minimum overlap
+        tracks[selected_track].append((start, end))
+        track_index = selected_track
+    return track_index
 
 
 def plot_paf_alignments(
@@ -390,6 +516,10 @@ def plot_paf_alignments(
     mapq_filter: int = 0,
     strict: PlotMode = PlotMode.CHILL,
     contig_colours: PlotMode = PlotMode.STRAND_COLOURS,
+    chevron: PlotMode | None = None,
+    filter_down: PlotMode | None = None,
+    expand_overlaps: PlotMode | None = None,
+    **kwargs,
 ) -> Axes:
     """
     Plots Pairwise Alignment Format (PAF) alignments as rectangles on a matplotlib axis.
@@ -400,9 +530,13 @@ def plot_paf_alignments(
     :param filter: Map q filter, filter out any alignments under this threshold. Defaults to 0 (All alignments).
     :param strict: If STRICT, Collapse contigs with multiple primary mappings into one
       contiguous block. Defaults to CHILL, where multiple mappings are plotted as separate blocks.
-    :contig_colours: If UNIQUE_COLOURS, use a unique colour for each contig. Defaults to STRAND_COLOURS,
+    :param contig_colours: If UNIQUE_COLOURS, use a unique colour for each contig. Defaults to STRAND_COLOURS,
       where contigs coloured by strand alignment
-
+    :param chevron: If True, plot chevron arrows representing strandedness
+      for alignments. Defaults to None, where chevrons are not plotted.
+    :param filter_down: If True, filter out alignments that are fully contained within another alignment.
+    :param **kwargs: Additional keyword arguments in order to override the default chevron
+        symbol. Options include 'chevron_symbol' and 'chevron_fontsize'.
     :return: None
 
     :note:
@@ -421,6 +555,7 @@ def plot_paf_alignments(
 
     # Now add 2 contigs (seq1 and seq2) and set strict to false ( collapse contigs with multiple mappings )
     >>> import matplotlib.pyplot as plt
+    >>> import matplotlib
     >>> from collections import namedtuple
 
     >>> PAF = namedtuple('PAF', ['query_name', 'query_length', 'query_start', 'query_end', 'strand', 'target_name',
@@ -444,6 +579,29 @@ def plot_paf_alignments(
     >>> ax.get_ylim()
     (0.0, 1.0)
     >>> ax = plot_paf_alignments(ax, alignments, target="targetA", strict=PlotMode.UNIQUE_COLOURS)
+
+    >>> fig, ax = plt.subplots(figsize=(4,1))
+    >>> ax.set_xlim((0,500))
+    (0.0, 500.0)
+    >>> alignments = [
+    ...     PAF(query_name='seq1', query_length=120, query_start=10, query_end=100, strand='+',
+    ... target_name='chr1', target_length=200, target_start=50, target_end=150, residue_matches=30,
+    ... alignment_block_length=70, mapping_quality=60, tags={}),
+    ...     PAF(query_name='seq2', query_length=120, query_start=10, query_end=11, strand='-',
+    ... target_name='chr1', target_length=1000, target_start=90, target_end=91, residue_matches=10,
+    ... alignment_block_length=5, mapping_quality=60, tags={})
+    ... ]
+    >>> plot_paf_alignments(ax, iter(alignments), "chr1", chevron=PlotMode.CHEVRON)
+    <Axes: xlabel='Position'>
+
+    # Check chevron is drawn for seq1 (enough space)
+    >>> text_objs = [obj for obj in ax.get_children() if isinstance(obj, matplotlib.text.Text)]
+    >>> any(">" in obj.get_text() for obj in text_objs)
+    True
+
+    # Check chevron is not drawn for seq2 (not enough space)
+    >>> any("<" in obj.get_text() for obj in text_objs)
+    False
     """
 
     iterable = filter(
@@ -452,23 +610,69 @@ def plot_paf_alignments(
     )
     if strict == PlotMode.STRICT:
         iterable = _collapse_multiple_mappings(iterable)
+    if kwargs.get("sorted", False):
+        iterable = sorted(iterable, key=lambda x: x.target_start)
+    if filter_down == PlotMode.FILTER_DOWN:
+        iterable = filter_extraneous_mappings(iterable)
+
+    # Upper limit on the track
+    max_y = 0.9
+    max_tracks = kwargs.get("max_tracks", MAX_TRACKS)
+    # How much to step by
+    dy = max_y / MAX_TRACKS if expand_overlaps == PlotMode.EXPAND_OVERLAPS else max_y
+    # Track which start stop are in use for each track
+    tracks = [[] for _ in range(max_tracks)]
     for alignment in iterable:
         if contig_colours == PlotMode.UNIQUE_COLOURS:
             colour = generate_random_color()
         else:
             colour = "#332288" if alignment.strand == "+" else "#882255"
-
+        start, end = alignment.target_start, alignment.target_end
         target_len = alignment.target_length
+        track_index = 0
+        if expand_overlaps == PlotMode.EXPAND_OVERLAPS:
+            track_index = _choose_track_with_min_overlap(start, end, tracks)
         target_rect = patches.Rectangle(
-            (alignment.target_start, 0),
-            alignment.target_end - alignment.target_start,
-            0.9,
+            (start, dy * track_index),
+            end - start,
+            dy,
             edgecolor=None,
             facecolor=colour,
             fill=True,
             visible=True,
+            zorder=1,
         )
         ax.add_patch(target_rect)
+        # Add chevron if there's enough space
+        if chevron == PlotMode.CHEVRON:
+            strand = alignment.strand
+            chevron_symbol = ">" if strand == "+" else "<"
+            fig = ax.get_figure()
+            # Calculate the rectangle width in inches lol
+            font_size_pt = kwargs.get("chevron_fontsize", CHEVRON_FONTSIZE)  # 10 points
+
+            # Convert font size to inches (1 point = 1/72 inches)
+            font_size_inch = font_size_pt / 72
+            # print(fig.get_size_inches())
+            # print(f"font_size_inch: {font_size_inch}")
+            # print(fig.dpi_scale_trans.inverted().transform(ax.transData.transform((alignment.target_end, 0))))
+            rect_width_inches = (
+                fig.dpi_scale_trans.inverted().transform(ax.transData.transform((alignment.target_end, 0)))
+                - fig.dpi_scale_trans.inverted().transform(ax.transData.transform((alignment.target_start, 0)))
+            )[0]
+            # print(f"rect_width_inches: {rect_width_inches}")
+            # Check if there's enough space for the chevron
+            if rect_width_inches > font_size_inch + 0.05:  # Define 'some_minimum_width' based on your requirement
+                # print("drawing chevron")
+                ax.text(
+                    (alignment.target_start + alignment.target_end) / 2,  # X position (center of the rectangle)
+                    0.45,  # Y position (roughly the middle of the rectangle in height)
+                    chevron_symbol,
+                    horizontalalignment="center",
+                    verticalalignment="center",
+                    fontsize=font_size_pt,  # Adjust fontsize as needed
+                    zorder=2,
+                )
 
     ax.set_xlim((0, target_len))
     ax.set_ylim((0, 1))
