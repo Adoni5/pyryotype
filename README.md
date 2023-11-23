@@ -8,12 +8,17 @@
 **Table of Contents**
 
 - [pyryotype](#pyryotype)
+  - [Acknowledgements](#acknowledgements)
   - [Installation](#installation)
   - [Example usage](#example-usage)
     - [Coverage plotting](#coverage-plotting)
     - [PAF plotting](#paf-plotting)
   - [License](#license)
   - [Cytoband data](#cytoband-data)
+
+## Acknowledgements
+Huge shout out to Ryan Dale (@daler) for the original work on the Ideograms - https://gist.github.com/daler/c98fc410282d7570efc3
+And @alexomics for the ground work on the coverage plotting and ideograms.
 
 ## Installation
 
