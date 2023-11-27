@@ -322,8 +322,8 @@ def merge_intervals(intervals: list[tuple[int, int]]) -> list[tuple[int, int]]:
 
 def _collapse_multiple_mappings(alignments: Iterator[PAFProtocol]) -> Iterator[PAFProtocol]:
     """
-    Collapse multiple mappings of sequences into a single mapping by selecting the mapping
-    that covers the largest proportion of the sequence.
+    Collapse multiple supplementary mappings on the same contig/strand combination into one contiguous block,
+    and yield a PAF for each block.
 
     This function takes an iterator of alignments and yields the largest proportion alignments
     for each query sequence.
@@ -352,23 +352,24 @@ def _collapse_multiple_mappings(alignments: Iterator[PAFProtocol]) -> Iterator[P
     >>> alignments = [alignment1, alignment2, alignment3]
     >>> result = list(_collapse_multiple_mappings(iter(alignments)))
     >>> len(result)
-    1
+    2
     >>> result[0].target_name
     'targetA'
     >>> result[0].target_start
     50
     >>> result[0].target_end
     160
+    >>> result[0].strand
+    '+'
 
     # Now add 2 contigs (seq1 and seq2) and different strands on seq1
     >>> alignments = [alignment1, alignment2, alignment3, alignment4, alignment5]
     >>> result = list(_collapse_multiple_mappings(iter(alignments)))
     >>> len(result)
-    2
+    4
 
     Note:
-    The above example demonstrates that for the 'seq1' query, the alignment to 'targetA' is chosen
-    because it covers a larger proportion of the query sequence.
+    We get four alignments back from the final test, as there are four query name, strand, contig combinations
     """
     curr_id = None
 
@@ -382,29 +383,31 @@ def _collapse_multiple_mappings(alignments: Iterator[PAFProtocol]) -> Iterator[P
             # We have a new query, yield the previous one
             # First we check which contig/strand had the largest amount of alignment to it
             # Then we yield the largest contig/strand
-            max_key = max(
-                contig_mapping_proportion,
-                key=lambda k: sum(item.query_end - item.query_start for item in contig_mapping_proportion[k]),
-            )
-            largest_proportion_alignments = sorted(contig_mapping_proportion[max_key], key=lambda x: x.target_start)
-
-            paf = PAF.from_protocol(largest_proportion_alignments[0])
-            paf.target_end = largest_proportion_alignments[-1].target_end
-            yield paf
+            # max_key = max(
+            #     contig_mapping_proportion,
+            #     key=lambda k: sum(item.query_end - item.query_start for item in contig_mapping_proportion[k]),
+            # )
+            # largest_proportion_alignments = sorted(contig_mapping_proportion[max_key], key=lambda x: x.target_start)
+            # Yield supplementary alignments collapsed as well
+            for contig, strand in contig_mapping_proportion:
+                largest_proportion_alignments = sorted(
+                    contig_mapping_proportion[(contig, strand)], key=lambda x: x.target_start
+                )
+                paf = PAF.from_protocol(largest_proportion_alignments[0])
+                paf.target_end = largest_proportion_alignments[-1].target_end
+                yield paf
             curr_id = alignment.query_name
             contig_mapping_proportion.clear()
 
         contig_mapping_proportion[(alignment.target_name, alignment.strand)].append(alignment)
     # Yield the last contig alignment
-    max_key = max(
-        contig_mapping_proportion,
-        key=lambda k: sum(item.query_end - item.query_start for item in contig_mapping_proportion[k]),
-    )
-    largest_proportion_alignments = sorted(contig_mapping_proportion[max_key], key=lambda x: x.target_start)
-
-    paf = PAF.from_protocol(largest_proportion_alignments[0])
-    paf.target_end = largest_proportion_alignments[-1].target_end
-    yield paf
+    for contig, strand in contig_mapping_proportion:
+        largest_proportion_alignments = sorted(
+            contig_mapping_proportion[(contig, strand)], key=lambda x: x.target_start
+        )
+        paf = PAF.from_protocol(largest_proportion_alignments[0])
+        paf.target_end = largest_proportion_alignments[-1].target_end
+        yield paf
 
 
 def generate_random_color():
@@ -622,6 +625,7 @@ def plot_paf_alignments(
     dy = max_y / MAX_TRACKS if expand_overlaps == PlotMode.EXPAND_OVERLAPS else max_y
     # Track which start stop are in use for each track
     tracks = [[] for _ in range(max_tracks)]
+    target_len = 1
     for alignment in iterable:
         if contig_colours == PlotMode.UNIQUE_COLOURS:
             colour = generate_random_color()
