@@ -13,6 +13,7 @@
   - [Example usage](#example-usage)
     - [Coverage plotting](#coverage-plotting)
     - [PAF plotting](#paf-plotting)
+  - [Coming soon!](#coming-soon)
   - [License](#license)
   - [Cytoband data](#cytoband-data)
 
@@ -123,9 +124,21 @@ Will output the following image:
 ![Example PAF plotting](https://raw.githubusercontent.com/Adoni5/pyryotype/d724012befec0b56351d0db5125f8d9cf4df1816/example_outputs/test_paf_plotting.png?raw=true)
 The colours assigned to each alignment can be changed to either be based on the Alignment Strand, or unique for each record. See the PlotMode [docstring](https://github.com/Adoni5/pyryotype/blob/0517a8805aac7b00bdddc7d612c2c80c56b6891c/src/pyryotype/paf_plotting.py#L366) for the options that can be applied.
 
-Multiple mappings on the same chromosome can be collapsed into a single line by setting `strict=PlotMode.STRICT`.
+Supplementary mappings on the same chromosome/strand for a given sequence can be collapsed into a single line by setting `strict=PlotMode.STRICT`.
 This can be seen in the above mappings, where the large block is comprised of 3 separate alignments, from the same read. IF `strict=PlotMode.CHILL` then each alignment will be plotted separately, even if these alignments are from the same read. This looks like:
 ![Example PAF plotting chill](https://raw.githubusercontent.com/Adoni5/pyryotype/d724012befec0b56351d0db5125f8d9cf4df1816/example_outputs/test_paf_plotting_chill.png?raw=true)
+
+There are now more options!
+Chevrons representing the alignment strand can be added by setting `chevron=PlotMode.CHEVRONS` in the `plot_paf_alignments` function. Chevrons will only be drawn if the rendered alignment block is wide enough. The fontsize of the chevron can be set with `kwarg` `chevron_fontsize`. An example image be seen in the following example:
+![Example PAF Plotting chevrons](https://github.com/Adoni5/pyryotype/blob/6949d6eb5806acb03ea968db48d0797f61679b75/example_outputs/test_paf_plotting_chevrons.png?raw=true)
+
+ We can now expand multiple alignments that overlap onto separate tracks (a la IGV.)
+This can be down by setting `expand=PlotMode.EXPAND` and `strict=PlotMode.STRICT`. This will expand overlapping alignments onto separate "tracks" on an axis. The number of tracks for a given axis can be set by the `kwarg` argument `max_tracks`. If there are more overlapping alignments that there are tracks, the track with the smalles overlap will be chosen. This can be seen in the following example (which also has chevrons enabled):
+![Example expanded tracks](https://github.com/Adoni5/pyryotype/blob/feature/chevron-orientation/example_outputs/test_paf_plotting_chevrons_ext_expand.png?raw=true)
+
+
+## Coming soon!
+CNV manhattan plots from a BAM file
 
 
 ## License
