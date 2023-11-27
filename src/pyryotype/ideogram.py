@@ -215,7 +215,7 @@ def plot_ideogram(
     if y_label is not None:
         x0, _x1 = ax.get_xlim()
         name = f"Chromosome {target.lstrip('chr')}"
-        ax.text(x0, ymid, name, fontsize="x-large", va="center")
+        ax.text(x0, 1, name, fontsize="x-large", va="bottom")
 
     return ax
 
