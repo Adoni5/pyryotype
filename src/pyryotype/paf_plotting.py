@@ -390,6 +390,9 @@ def _collapse_multiple_mappings(alignments: Iterator[PAFProtocol]) -> Iterator[P
                     contig_mapping_proportion[(query_name, contig)], key=lambda x: x.target_start
                 )
                 paf = PAF.from_protocol(largest_proportion_alignments[0])
+                largest_proportion_alignments = sorted(
+                    contig_mapping_proportion[(query_name, contig)], key=lambda x: x.target_end
+                )
                 paf.target_end = largest_proportion_alignments[-1].target_end
                 yield paf
             curr_id = alignment.query_name
@@ -402,6 +405,9 @@ def _collapse_multiple_mappings(alignments: Iterator[PAFProtocol]) -> Iterator[P
             contig_mapping_proportion[(query_name, contig)], key=lambda x: x.target_start
         )
         paf = PAF.from_protocol(largest_proportion_alignments[0])
+        largest_proportion_alignments = sorted(
+            contig_mapping_proportion[(query_name, contig)], key=lambda x: x.target_end
+        )
         paf.target_end = largest_proportion_alignments[-1].target_end
         yield paf
 
@@ -611,10 +617,10 @@ def plot_paf_alignments(
         lambda x: x.target_name == target and x.mapping_quality >= mapq_filter,
         alignments,
     )
-    if strict == PlotMode.STRICT:
-        iterable = _collapse_multiple_mappings(iterable)
     if kwargs.get("sorted", False):
         iterable = sorted(iterable, key=lambda x: x.target_start)
+    if strict == PlotMode.STRICT:
+        iterable = _collapse_multiple_mappings(iterable)
     if filter_down == PlotMode.FILTER_DOWN:
         iterable = filter_extraneous_mappings(iterable)
 
