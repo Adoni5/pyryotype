@@ -132,6 +132,6 @@ def get_metadata_csv(alignments: Iterator[PAFProtocol], filename: str | Path, ma
             ),
             key=lambda x: x.query_name,
         )
-        print(alignments)
+        # print(alignments)
         for alignment in _choose_largest_alignments_block(alignments):
             writer.writerow(chain((getattr(alignment, h, "*") for h in headers), (alignment.blast_identity(),)))
