@@ -121,10 +121,18 @@ def get_metadata_csv(alignments: Iterator[PAFProtocol], filename: str | Path, ma
     :param filename: The filename to write the metadata to. Raises FileExistsError if the file already exists.
     :param mapq_threshold: Filter out alignments under this threshold. Defaults 0.
     """
-    headers = ["query_name", "target_name", "target_start", "target_end", "mapping_quality"]
+    headers = [
+        "query_name",
+        "query_length",
+        "mapping_quality",
+        "target_name",
+        "target_start",
+        "target_end",
+        "target_length",
+    ]
     with open(filename, "x", newline="") as fh:
         writer = csv.writer(fh)
-        writer.writerow([*headers, "blast_identity"])
+        writer.writerow([*headers, "blast_identity", "fraction_target_length"])
         alignments = sorted(
             filter(
                 lambda x: x.mapping_quality >= mapq_threshold,
@@ -134,4 +142,9 @@ def get_metadata_csv(alignments: Iterator[PAFProtocol], filename: str | Path, ma
         )
         # print(alignments)
         for alignment in _choose_largest_alignments_block(alignments):
-            writer.writerow(chain((getattr(alignment, h, "*") for h in headers), (alignment.blast_identity(),)))
+            writer.writerow(
+                chain(
+                    (getattr(alignment, h, "*") for h in headers),
+                    (alignment.blast_identity(), alignment.query_length / alignment.target_length),
+                )
+            )
