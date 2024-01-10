@@ -194,3 +194,34 @@ def test_drawing_paf_alignments_chevrons_ext_expand_chill():
     for side in ("right", "top", "left"):
         ax.spines[side].set_visible(False)
     fig.savefig("example_outputs/test_paf_plotting_chevrons_ext_expand_chill.png", dpi=300, bbox_inches="tight")
+
+
+def test_drawing_paf_alignments_chevrons_ext_expand_chill_label():
+    test_paf = Path(__file__).parent / "static" / "test_extraneous.paf"
+    fig, ax = plt.subplots(
+        ncols=1,
+        nrows=1,
+        figsize=(11, 1),
+    )
+    ax.set_xlim(0, 200000100)
+
+    ax = plot_paf_alignments(
+        ax,
+        parse_paf(test_paf.open()),
+        target="chr1",
+        mapq_filter=0,
+        strict=PlotMode.CHILL,
+        contig_colours=PlotMode.STRAND_COLOURS,
+        chevron=PlotMode.CHEVRON,
+        filter_down=None,
+        expand_overlaps=PlotMode.EXPAND_OVERLAPS,
+        label_n_largest=3,
+    )
+    ax.set_xlabel("")
+
+    # ax.yaxis.set_visible(False)
+    ax.set_yticks([])
+    ax.set_yticklabels([])
+    for side in ("right", "top", "left"):
+        ax.spines[side].set_visible(False)
+    fig.savefig("example_outputs/test_paf_plotting_chevrons_ext_expand_chill_label.png", dpi=300, bbox_inches="tight")
