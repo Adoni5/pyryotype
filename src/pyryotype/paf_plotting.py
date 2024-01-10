@@ -536,8 +536,10 @@ def plot_paf_alignments(
       for alignments. Defaults to None, where chevrons are not plotted.
     :param filter_down: If True, filter out alignments that are fully contained within another alignment.
     :param label_n_largest: Label n alignments by size of aligned block with their query name
+    :param expand_overlaps: Explode overlaps of alignments into separate tracks. The kwarg max_tracks set
+      the number of tracks, with a default of 6.
     :param **kwargs: Additional keyword arguments in order to override the default chevron
-        symbol. Options include 'chevron_symbol', 'label_fontsize' and 'chevron_fontsize'.
+        symbol. Options include 'chevron_symbol', 'label_fontsize', 'label_y' and 'chevron_fontsize'.
     :return: None
 
     :note:
@@ -694,7 +696,7 @@ def plot_paf_alignments(
             if rect_width_inches > font_size_inch * len(alignment.query_name) + 0.05:
                 ax.text(
                     (alignment.target_start + alignment.target_end) / 2,  # X position (center of the rectangle)
-                    0.9,  # Y position (roughly the middle of the rectangle in height)
+                    kwargs.get("label_y", 0.9),  # Y position (roughly the middle of the rectangle in height)
                     alignment.query_name,
                     horizontalalignment="center",
                     verticalalignment="center",
