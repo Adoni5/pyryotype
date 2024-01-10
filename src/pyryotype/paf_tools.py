@@ -37,7 +37,7 @@ def _choose_largest_alignments_block(alignments: Iterator[PAFProtocol]) -> Itera
     >>> alignments = [alignment1, alignment2, alignment3]
     >>> result = list(_choose_largest_alignments_block(iter(alignments)))
     >>> len(result)
-    2
+    1
     >>> result[0].target_name
     'targetA'
     >>> result[0].target_start
@@ -51,7 +51,7 @@ def _choose_largest_alignments_block(alignments: Iterator[PAFProtocol]) -> Itera
     >>> alignments = [alignment1, alignment2, alignment3, alignment4, alignment5]
     >>> result = list(_choose_largest_alignments_block(iter(alignments)))
     >>> len(result)
-    1
+    2
 
     Note:
     We get three alignments back from the final test, as there are three query name, contig combinations
@@ -70,16 +70,16 @@ def _choose_largest_alignments_block(alignments: Iterator[PAFProtocol]) -> Itera
                 for al in als:
                     most_contig[contig] += al.target_end - al.target_start
             biggest_al_block_target = max(most_contig, key=most_contig.get)
-            print(f"query name {_query_name}, biggest contig {biggest_al_block_target}")
-            print(contig_mapping_proportion)
+            # print(f"query name {_query_name}, biggest contig {biggest_al_block_target}")
+            # print(contig_mapping_proportion)
             # We have a new query, yield the previous one
             # First we check which contig/strand had the largest amount of alignment to it
             # Then we yield the largest contig/strand
             # Yield supplementary alignments collapsed as well
             for query_name, contig in filter(
-                lambda kv: kv[1] == biggest_al_block_target, contig_mapping_proportion.items()
+                lambda kv: kv[1] == biggest_al_block_target, contig_mapping_proportion.keys()
             ):
-                print(f"hello {alignment}")
+                # print(f"hello {alignment}")
                 largest_proportion_alignments = sorted(
                     contig_mapping_proportion[(query_name, contig)], key=lambda x: x.target_start
                 )
@@ -94,7 +94,12 @@ def _choose_largest_alignments_block(alignments: Iterator[PAFProtocol]) -> Itera
 
         contig_mapping_proportion[(alignment.query_name, alignment.target_name)].append(alignment)
     # Yield the last contig alignment
-    for query_name, contig in contig_mapping_proportion:
+    most_contig = defaultdict(int)
+    for (_query_name, contig), als in contig_mapping_proportion.items():
+        for al in als:
+            most_contig[contig] += al.target_end - al.target_start
+    biggest_al_block_target = max(most_contig, key=most_contig.get)
+    for query_name, contig in filter(lambda kv: kv[1] == biggest_al_block_target, contig_mapping_proportion.keys()):
         largest_proportion_alignments = sorted(
             contig_mapping_proportion[(query_name, contig)], key=lambda x: x.target_start
         )
