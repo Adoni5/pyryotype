@@ -367,10 +367,10 @@ def _collapse_multiple_mappings(alignments: Iterator[PAFProtocol]) -> Iterator[P
     >>> alignments = [alignment1, alignment2, alignment3, alignment4, alignment5]
     >>> result = list(_collapse_multiple_mappings(iter(alignments)))
     >>> len(result)
-    4
+    3
 
     Note:
-    We get four alignments back from the final test, as there are four query name, strand, contig combinations
+    We get three alignments back from the final test, as there are three query name, contig combinations
     """
     curr_id = None
 
