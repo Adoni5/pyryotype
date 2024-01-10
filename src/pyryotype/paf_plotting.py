@@ -60,6 +60,7 @@ CHEVRON_FORWARD = ">"
 CHEVRON_REVERSE = "<"
 CHEVRON_FONTSIZE = 20
 MAX_TRACKS = 10
+LABEL_FONTSIZE = 11
 
 
 class PAFProtocol(Protocol):
@@ -366,10 +367,10 @@ def _collapse_multiple_mappings(alignments: Iterator[PAFProtocol]) -> Iterator[P
     >>> alignments = [alignment1, alignment2, alignment3, alignment4, alignment5]
     >>> result = list(_collapse_multiple_mappings(iter(alignments)))
     >>> len(result)
-    4
+    3
 
     Note:
-    We get four alignments back from the final test, as there are four query name, strand, contig combinations
+    We get three alignments back from the final test, as there are three query name, contig combinations
     """
     curr_id = None
 
@@ -383,15 +384,10 @@ def _collapse_multiple_mappings(alignments: Iterator[PAFProtocol]) -> Iterator[P
             # We have a new query, yield the previous one
             # First we check which contig/strand had the largest amount of alignment to it
             # Then we yield the largest contig/strand
-            # max_key = max(
-            #     contig_mapping_proportion,
-            #     key=lambda k: sum(item.query_end - item.query_start for item in contig_mapping_proportion[k]),
-            # )
-            # largest_proportion_alignments = sorted(contig_mapping_proportion[max_key], key=lambda x: x.target_start)
             # Yield supplementary alignments collapsed as well
-            for contig, strand in contig_mapping_proportion:
+            for query_name, contig in contig_mapping_proportion:
                 largest_proportion_alignments = sorted(
-                    contig_mapping_proportion[(contig, strand)], key=lambda x: x.target_start
+                    contig_mapping_proportion[(query_name, contig)], key=lambda x: x.target_start
                 )
                 paf = PAF.from_protocol(largest_proportion_alignments[0])
                 paf.target_end = largest_proportion_alignments[-1].target_end
@@ -399,11 +395,11 @@ def _collapse_multiple_mappings(alignments: Iterator[PAFProtocol]) -> Iterator[P
             curr_id = alignment.query_name
             contig_mapping_proportion.clear()
 
-        contig_mapping_proportion[(alignment.target_name, alignment.strand)].append(alignment)
+        contig_mapping_proportion[(alignment.query_name, alignment.target_name)].append(alignment)
     # Yield the last contig alignment
-    for contig, strand in contig_mapping_proportion:
+    for query_name, contig in contig_mapping_proportion:
         largest_proportion_alignments = sorted(
-            contig_mapping_proportion[(contig, strand)], key=lambda x: x.target_start
+            contig_mapping_proportion[(query_name, contig)], key=lambda x: x.target_start
         )
         paf = PAF.from_protocol(largest_proportion_alignments[0])
         paf.target_end = largest_proportion_alignments[-1].target_end
@@ -522,6 +518,7 @@ def plot_paf_alignments(
     chevron: PlotMode | None = None,
     filter_down: PlotMode | None = None,
     expand_overlaps: PlotMode | None = None,
+    label_n_largest: int | None = None,
     **kwargs,
 ) -> Axes:
     """
@@ -538,8 +535,9 @@ def plot_paf_alignments(
     :param chevron: If True, plot chevron arrows representing strandedness
       for alignments. Defaults to None, where chevrons are not plotted.
     :param filter_down: If True, filter out alignments that are fully contained within another alignment.
+    :param label_n_largest: Label n alignments by size of aligned block with their query name
     :param **kwargs: Additional keyword arguments in order to override the default chevron
-        symbol. Options include 'chevron_symbol' and 'chevron_fontsize'.
+        symbol. Options include 'chevron_symbol', 'label_fontsize' and 'chevron_fontsize'.
     :return: None
 
     :note:
@@ -666,7 +664,7 @@ def plot_paf_alignments(
             )[0]
             # print(f"rect_width_inches: {rect_width_inches}")
             # Check if there's enough space for the chevron
-            if rect_width_inches > font_size_inch + 0.05:  # Define 'some_minimum_width' based on your requirement
+            if rect_width_inches > font_size_inch + 0.05:
                 # print("drawing chevron")
                 ax.text(
                     (alignment.target_start + alignment.target_end) / 2,  # X position (center of the rectangle)
@@ -674,10 +672,35 @@ def plot_paf_alignments(
                     chevron_symbol,
                     horizontalalignment="center",
                     verticalalignment="center",
-                    fontsize=font_size_pt,  # Adjust fontsize as needed
+                    fontsize=font_size_pt,
                     zorder=2,
                 )
+        if label_n_largest:
+            fig = ax.get_figure()
+            # Calculate the rectangle width in inches lol
+            font_size_pt = kwargs.get("label_fontsize", LABEL_FONTSIZE)  # 10 points
 
+            # Convert font size to inches (1 point = 1/72 inches)
+            font_size_inch = font_size_pt / 72
+            # print(fig.get_size_inches())
+            # print(f"font_size_inch: {font_size_inch}")
+            # print(fig.dpi_scale_trans.inverted().transform(ax.transData.transform((alignment.target_end, 0))))
+            rect_width_inches = (
+                fig.dpi_scale_trans.inverted().transform(ax.transData.transform((alignment.target_end, 0)))
+                - fig.dpi_scale_trans.inverted().transform(ax.transData.transform((alignment.target_start, 0)))
+            )[0]
+            # print(f"rect_width_inches: {rect_width_inches}")
+            # Check if there's enough space for the chevron
+            if rect_width_inches > font_size_inch * len(alignment.query_name) + 0.05:
+                ax.text(
+                    (alignment.target_start + alignment.target_end) / 2,  # X position (center of the rectangle)
+                    0.9,  # Y position (roughly the middle of the rectangle in height)
+                    alignment.query_name,
+                    horizontalalignment="center",
+                    verticalalignment="center",
+                    fontsize=font_size_pt,
+                    zorder=3,
+                )
     ax.set_xlim((0, target_len))
     ax.set_ylim((0, 1))
     ax.set_xlabel("Position")
