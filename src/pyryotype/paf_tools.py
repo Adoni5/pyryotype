@@ -70,6 +70,8 @@ def _choose_largest_alignments_block(alignments: Iterator[PAFProtocol]) -> Itera
                 for al in als:
                     most_contig[contig] += al.target_end - al.target_start
             biggest_al_block_target = max(most_contig, key=most_contig.get)
+            print(f"query name {_query_name}, biggest contig {biggest_al_block_target}")
+            print(contig_mapping_proportion)
             # We have a new query, yield the previous one
             # First we check which contig/strand had the largest amount of alignment to it
             # Then we yield the largest contig/strand
@@ -77,6 +79,7 @@ def _choose_largest_alignments_block(alignments: Iterator[PAFProtocol]) -> Itera
             for query_name, contig in filter(
                 lambda kv: kv[1] == biggest_al_block_target, contig_mapping_proportion.items()
             ):
+                print(f"hello {alignment}")
                 largest_proportion_alignments = sorted(
                     contig_mapping_proportion[(query_name, contig)], key=lambda x: x.target_start
                 )
@@ -124,5 +127,6 @@ def get_metadata_csv(alignments: Iterator[PAFProtocol], filename: str | Path, ma
             ),
             key=lambda x: x.query_name,
         )
+        print(alignments)
         for alignment in _choose_largest_alignments_block(alignments):
             writer.writerow(chain((getattr(alignment, h, "*") for h in headers), (alignment.blast_identity(),)))
