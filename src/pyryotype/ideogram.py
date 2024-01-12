@@ -17,6 +17,16 @@ class GENOME(Enum):
     HS1 = "hs1"
 
 
+class Orientation(Enum):
+    VERTICAL = "Vertical"
+    HORIZONTAL = "Horizontal"
+
+
+class Detail(Enum):
+    CYTOBAND = "Cytoband"
+    BARE = "Bare"
+
+
 COLOUR_LOOKUP = {
     "gneg": (1.0, 1.0, 1.0),
     "gpos25": (0.6, 0.6, 0.6),
@@ -102,6 +112,9 @@ def plot_ideogram(
     left_margin: float = 0.25,
     target_region_extent: float = 0.3,
     y_label: str | None = None,
+    vertical: Orientation = Orientation.HORIZONTAL,
+    regions: list[tuple[int, int, str]] | None = None,
+    cytobands: Detail = Detail.CYTOBAND,
 ):
     """
     Plot a chromosome ideogram with cytobands and optionally highlight a specific region.
@@ -119,6 +132,10 @@ def plot_ideogram(
     :param right_margin: Margin for the right side of the x-axis.
     :param left_margin: Margin for the left side of the x-axis.
     :param target_region_extent: Extent of the target region highlight.
+    :param vertical: Orientation of ideogram. False draws horizontal ideograms.
+    :param regions: List of regions to colour in on the karyotype. Respects vertical kwarg - a region should
+    be a tuple of format (start, stop, colour)
+    :param cytobands: Whether to render cytobands
 
     :return: Updated axis object with the plotted ideogram.
 
@@ -141,48 +158,64 @@ def plot_ideogram(
     if df.empty:
         msg = f"Chromosome {target} not found in cytoband data. Should be one of {chr_names}"
         raise ValueError(msg)
-    yrange = (lower_anchor, height)  # lower anchor, height
-    ymid = (max(yrange) - min(yrange)) / 2
+    yrange = (lower_anchor, height)
     xrange = df[["chromStart", "width"]].values
     chr_len = df["chromEnd"].max()
+    ymid = (max(yrange) - min(yrange)) / 2
+    if cytobands == Detail.CYTOBAND:
+        if vertical == Orientation.VERTICAL:
+            yranges = df[["chromStart", "width"]].values
+            x_range = (lower_anchor, height)
+            face_colours = iter(df["colour"])
+            for yrange in yranges:
+                ax.broken_barh([(0, 1)], yrange, facecolors=next(face_colours))
 
-    # Stain lines
-    ax.broken_barh(xrange, yrange, facecolors=df["colour"])
+            (max(x_range) - min(x_range)) / 2
+            print(yrange)
+
+        else:
+            ax.broken_barh(xrange, yrange, facecolors=df["colour"])
 
     # Define and draw the centromere using the rows marked as 'cen' in the 'gieStain' column
     cen_df = df[df["gieStain"].str.contains("cen")]
     cen_start = cen_df["chromStart"].min()
     cen_end = cen_df["chromEnd"].max()
-
     cen_poly = [
         (cen_start, lower_anchor),
         (cen_start, height),
         (cen_end, lower_anchor),
         (cen_end, height),
     ]
+    # if vertical == Orientation.VERTICAL:
+
+    # Define and draw the chromosome outline, taking into account the shape around the centromere
+    outline = [
+        (MplPath.MOVETO, (lower_anchor, height)),
+        # Top left, bottom right: ‾\_
+        (MplPath.LINETO, (cen_start, height)),
+        (MplPath.LINETO, (cen_end, lower_anchor)),
+        (MplPath.LINETO, (chr_len, lower_anchor)),
+        # Right telomere: )
+        (MplPath.LINETO, (chr_len, lower_anchor)),
+        (MplPath.CURVE3, (chr_len + chr_len * curve, ymid)),
+        (MplPath.LINETO, (chr_len, height)),
+        # Top right, bottom left: _/‾
+        (MplPath.LINETO, (cen_end, height)),
+        (MplPath.LINETO, (cen_start, lower_anchor)),
+        (MplPath.LINETO, (lower_anchor, lower_anchor)),
+        # Left telomere: (
+        (MplPath.CURVE3, (lower_anchor - chr_len * curve, ymid)),
+        (MplPath.LINETO, (lower_anchor, height)),
+        (MplPath.CLOSEPOLY, (lower_anchor, height)),
+    ]
+    if vertical == Orientation.VERTICAL:
+        outline = [(command, coords[::-1]) for command, coords in outline]
+        cen_poly = [coords[::-1] for coords in cen_poly]
     cen_patch = PathPatch(MplPath(cen_poly), facecolor=(0.8, 0.4, 0.4), lw=0)
     ax.add_patch(cen_patch)
-    # Define and draw the chromosome outline, taking into account the shape around the centromere
+
     chr_move, chr_poly = zip(
-        *[
-            (MplPath.MOVETO, (lower_anchor, height)),
-            # Top left, bottom right: ‾\_
-            (MplPath.LINETO, (cen_start, height)),
-            (MplPath.LINETO, (cen_end, lower_anchor)),
-            (MplPath.LINETO, (chr_len, lower_anchor)),
-            # Right telomere: )
-            (MplPath.LINETO, (chr_len, lower_anchor)),
-            (MplPath.CURVE3, (chr_len + chr_len * curve, ymid)),
-            (MplPath.LINETO, (chr_len, height)),
-            # Top right, bottom left: _/‾
-            (MplPath.LINETO, (cen_end, height)),
-            (MplPath.LINETO, (cen_start, lower_anchor)),
-            (MplPath.LINETO, (lower_anchor, lower_anchor)),
-            # Left telomere: (
-            (MplPath.CURVE3, (lower_anchor - chr_len * curve, ymid)),
-            (MplPath.LINETO, (lower_anchor, height)),
-            (MplPath.CLOSEPOLY, (lower_anchor, height)),
-        ],
+        *outline,
         strict=True,
     )
     chr_patch = PathPatch(MplPath(chr_poly, chr_move), fill=None, joinstyle="round")
@@ -201,6 +234,27 @@ def plot_ideogram(
         )
         ax.add_patch(r)
 
+    if regions:
+        for r_start, r_stop, r_colour in regions:
+            x0, width = r_start, r_stop - r_start
+            y0 = lower_anchor + 0.02
+            # print(f"x0 {x0}, width {width}, height: he")
+            if vertical == Orientation.VERTICAL:
+                x0 = lower_anchor + 0.03
+                y0 = r_start
+                height = width
+                width = 0.94
+
+            r = Rectangle(
+                (x0, y0),  # +0.01 should shift us off outline of chromosome
+                width=width,
+                height=0.94,
+                fill=True,
+                color=r_colour,
+                joinstyle="round",
+            )
+            ax.add_patch(r)
+
     # Adjust x-axis margins
     set_xmargin(ax, left=left_margin, right=right_margin)
     ax.set_ymargin(y_margin)
@@ -213,9 +267,12 @@ def plot_ideogram(
 
     # Add chromosome name to the plot
     if y_label is not None:
-        x0, _x1 = ax.get_xlim()
-        name = f"Chromosome {target.lstrip('chr')}"
-        ax.text(x0, 1, name, fontsize="x-large", va="bottom")
+        if vertical == Orientation.VERTICAL:
+            y0, _y1 = ax.get_ylim()
+            ax.text(0.5, y0, y_label, fontsize="x-large", va="bottom", ha="center", rotation=90)
+        else:
+            x0, _x1 = ax.get_xlim()
+            ax.text(x0, 1, y_label, fontsize="x-large", va="bottom")
 
     return ax
 
