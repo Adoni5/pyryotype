@@ -11,9 +11,11 @@
   - [Acknowledgements](#acknowledgements)
   - [Installation](#installation)
   - [Example usage](#example-usage)
+      - [You want vertical? We got vertical](#you-want-vertical-we-got-vertical)
     - [Coverage plotting](#coverage-plotting)
     - [PAF plotting](#paf-plotting)
-  - [Coming soon!](#coming-soon)
+  - [CNV from bam](#cnv-from-bam)
+  - [Bandage friendly CSV](#bandage-friendly-csv)
   - [License](#license)
   - [Cytoband data](#cytoband-data)
 
@@ -48,6 +50,12 @@ fig.savefig("ideogram.png", dpi=300)
 Will output:
 ![Example ideogram](https://raw.githubusercontent.com/Adoni5/pyryotype/d724012befec0b56351d0db5125f8d9cf4df1816/example_outputs/ideogram.png?raw=true)
 
+#### You want vertical? We got vertical
+With Regions highlighted on Chromosome 1 - Optional!
+[def test_23_vertical_chm13_regions():](https://github.com/Adoni5/pyryotype/blob/ec2239cd0fac6ff57e3129cc52ac860d729c94e5/tests/test_ideogram_plotting.py#L81-L98)
+
+Will output
+![Example ideogram](https://github.com/Adoni5/pyryotype/blob/main/example_outputs/testing_vert_23_regions.png)
 ### Coverage plotting
 Coverage plotting is designed to be used with the output of [Mosdepth](https://github.com/brentp/mosdepth). The following example uses the output of `mosdepth` to plot the coverage of chromosome 1. The region representing the first 100Mb of the chromosome is highlighted in black.
 
@@ -85,6 +93,8 @@ fig.savefig("example_outputs/test_coverage.png", dpi=300, bbox_inches="tight")
 ```
 Will output something like:
 ![Example Coverage](https://raw.githubusercontent.com/Adoni5/pyryotype/main/example_outputs/test_coverage.png)
+
+
 
 ### PAF plotting
 
@@ -136,9 +146,18 @@ Chevrons representing the alignment strand can be added by setting `chevron=Plot
 This can be down by setting `expand=PlotMode.EXPAND` and `strict=PlotMode.STRICT`. This will expand overlapping alignments onto separate "tracks" on an axis. The number of tracks for a given axis can be set by the `kwarg` argument `max_tracks`. If there are more overlapping alignments that there are tracks, the track with the smalles overlap will be chosen. This can be seen in the following example (which also has chevrons enabled):
 ![Example expanded tracks](https://github.com/Adoni5/pyryotype/blob/feature/chevron-orientation/example_outputs/test_paf_plotting_chevrons_ext_expand.png?raw=true)
 
+## CNV from bam
+A separate repo calculates CNV from BAM files by binning alignment mapping starts and returning CNV by a dynamically calculated bin width.
+See here for more detail - https://github.com/Adoni5/cnv_from_bam
 
-## Coming soon!
-CNV manhattan plots from a BAM file
+
+## Bandage friendly CSV
+For visualising Genomes that provide GFA, we can take a PAF file of the genome aligned to a suitable reference,a nd output a
+CSV for labelling the sequence nodes in bandage.
+See https://github.com/Adoni5/pyryotype/blob/ec2239cd0fac6ff57e3129cc52ac860d729c94e5/src/pyryotype/paf_tools.py#L114 for more.
+
+> [!NOTE]
+> **Note**: For alignments with many supplementary alignments, the alignment is collapsed to the alignment that covers the largest area of a single contig on the reference.
 
 
 ## License
