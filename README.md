@@ -51,11 +51,11 @@ Will output:
 ![Example ideogram](https://raw.githubusercontent.com/Adoni5/pyryotype/d724012befec0b56351d0db5125f8d9cf4df1816/example_outputs/ideogram.png?raw=true)
 
 #### You want vertical? We got vertical
-With Regions highlighted on Chromosome 1 - Optional!
-[def test_23_vertical_chm13_regions():](https://github.com/Adoni5/pyryotype/blob/ec2239cd0fac6ff57e3129cc52ac860d729c94e5/tests/test_ideogram_plotting.py#L81-L98)
+With Regions highlighted on Chromosome 1 - Optional! See the following testing code snippet for an example
+[def test_23_vertical_chm13_regions()](https://github.com/Adoni5/pyryotype/blob/ec2239cd0fac6ff57e3129cc52ac860d729c94e5/tests/test_ideogram_plotting.py#L81-L98)
 
 Will output
-![Example ideogram](https://github.com/Adoni5/pyryotype/blob/main/example_outputs/testing_vert_23_regions.png)
+![Example vertical ideogram](https://github.com/Adoni5/pyryotype/blob/main/testing_vert_23_regions.png)
 ### Coverage plotting
 Coverage plotting is designed to be used with the output of [Mosdepth](https://github.com/brentp/mosdepth). The following example uses the output of `mosdepth` to plot the coverage of chromosome 1. The region representing the first 100Mb of the chromosome is highlighted in black.
 
