@@ -1,8 +1,11 @@
 from itertools import chain
+from pathlib import Path
 
 from matplotlib import pyplot as plt
 from pyryotype import plot_ideogram
 from pyryotype.ideogram import GENOME, Detail, Orientation
+
+OUT_DIR = Path(__file__).parent.parent / "example_outputs"
 
 
 def test_simple_vertical_chr1():
@@ -15,7 +18,7 @@ def test_simple_vertical_chr1():
 
     plot_ideogram(ax, target="chr1", left_margin=0, y_label="", vertical=Orientation.VERTICAL)
 
-    fig.savefig("testing_vert.png", bbox_inches="tight")
+    fig.savefig(OUT_DIR / "testing_vert.png", bbox_inches="tight")
 
 
 def test_23_vertical_chm13():
@@ -27,7 +30,7 @@ def test_23_vertical_chm13():
             ax, target=f"chr{i}", y_label="Chr. {i}", left_margin=0, vertical=Orientation.VERTICAL, genome=genome
         )
 
-    fig.savefig("testing_vert_23.png", bbox_inches="tight")
+    fig.savefig(OUT_DIR / "testing_vert_23.png", bbox_inches="tight")
 
 
 def test_23_vertical_hg38():
@@ -39,7 +42,7 @@ def test_23_vertical_hg38():
             ax, target=f"chr{i}", y_label="Chr. {i}", left_margin=0, vertical=Orientation.VERTICAL, genome=genome
         )
 
-    fig.savefig("testing_vert_23_hg38.png", bbox_inches="tight")
+    fig.savefig(OUT_DIR / "testing_vert_23_hg38.png", bbox_inches="tight")
 
 
 def test_23_vertical_chm13_bare():
@@ -57,7 +60,7 @@ def test_23_vertical_chm13_bare():
             genome=genome,
         )
 
-    fig.savefig("testing_vert_bare_23.png", bbox_inches="tight")
+    fig.savefig(OUT_DIR / "testing_vert_bare_23.png", bbox_inches="tight")
 
 
 def test_23_horizontal_chm13_bare():
@@ -75,7 +78,7 @@ def test_23_horizontal_chm13_bare():
             genome=genome,
         )
 
-    fig.savefig("testing_horz_bare_23.png", bbox_inches="tight")
+    fig.savefig(OUT_DIR / "testing_horz_bare_23.png", bbox_inches="tight")
 
 
 def test_23_vertical_chm13_regions():
@@ -95,7 +98,7 @@ def test_23_vertical_chm13_regions():
             regions=regions,
         )
 
-    fig.savefig("testing_vert_23_regions.png", bbox_inches="tight")
+    fig.savefig(OUT_DIR / "testing_vert_23_regions.png", bbox_inches="tight")
 
 
 def test_23_horz_chm13_regions():
@@ -116,4 +119,4 @@ def test_23_horz_chm13_regions():
             regions=regions,
         )
 
-    fig.savefig("testing_horz_23_regions.png", bbox_inches="tight")
+    fig.savefig(OUT_DIR / "testing_horz_23_regions.png", bbox_inches="tight")
