@@ -253,7 +253,7 @@ def plot_ideogram(
                 color=r_colour,
                 joinstyle="round",
                 zorder=3,
-                alpha=0.5,
+                alpha=kwargs.get("alpha", 0.5),
             )
             ax.add_patch(r)
 
