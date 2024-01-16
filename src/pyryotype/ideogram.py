@@ -271,10 +271,10 @@ def plot_ideogram(
     if y_label is not None:
         if vertical == Orientation.VERTICAL:
             y0, _y1 = ax.get_ylim()
-            ax.text(0.5, y0, y_label, fontsize="x-large", va="bottom", ha="center", rotation=90)
+            ax.text(0.5, y0, y_label, fontsize=kwargs.get("fontsize", "x-large"), va="bottom", ha="center", rotation=90)
         else:
             x0, _x1 = ax.get_xlim()
-            ax.text(x0, 1, y_label, fontsize="x-large", va="bottom")
+            ax.text(x0, 1, y_label, fontsize=kwargs.get("fontsize", "x-large"), va="bottom")
 
     return ax
 
