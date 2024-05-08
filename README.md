@@ -26,7 +26,7 @@ And @alexomics for the ground work on the coverage plotting and ideograms.
 ## Installation
 
 ```console
-    pip install ideogram
+    pip install pyryotype
 ```
 
 ## Example usage
@@ -41,8 +41,8 @@ fig, axes = plt.subplots(
     facecolor="white",
 )
 genome = GENOME.CHM13
-for ax, contig_name in zip(axes, range(1, 23)):
-    chromosome = f"chr{contig_name}"
+for ax, contig_name in zip(axes, [f"chr{i}" for i in chain(range(1, 23), "XY")]):
+    chromosome = contig_name
     plot_ideogram(ax, target=chromosome, genome=genome)
 fig.savefig("ideogram.png", dpi=300)
 ```

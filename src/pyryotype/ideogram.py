@@ -115,6 +115,7 @@ def plot_ideogram(
     vertical: Orientation = Orientation.HORIZONTAL,
     regions: list[tuple[int, int, str]] | None = None,
     cytobands: Detail = Detail.CYTOBAND,
+    **kwargs,
 ):
     """
     Plot a chromosome ideogram with cytobands and optionally highlight a specific region.
@@ -168,13 +169,12 @@ def plot_ideogram(
             x_range = (lower_anchor, height)
             face_colours = iter(df["colour"])
             for yrange in yranges:
-                ax.broken_barh([(0, 1)], yrange, facecolors=next(face_colours))
+                ax.broken_barh([(lower_anchor, height - 0.01)], yrange, facecolors=next(face_colours), zorder=1)
 
             (max(x_range) - min(x_range)) / 2
-            print(yrange)
 
         else:
-            ax.broken_barh(xrange, yrange, facecolors=df["colour"])
+            ax.broken_barh(xrange, yrange, facecolors=df["colour"], alpha=0.6)
 
     # Define and draw the centromere using the rows marked as 'cen' in the 'gieStain' column
     cen_df = df[df["gieStain"].str.contains("cen")]
@@ -211,14 +211,14 @@ def plot_ideogram(
     if vertical == Orientation.VERTICAL:
         outline = [(command, coords[::-1]) for command, coords in outline]
         cen_poly = [coords[::-1] for coords in cen_poly]
-    cen_patch = PathPatch(MplPath(cen_poly), facecolor=(0.8, 0.4, 0.4), lw=0)
+    cen_patch = PathPatch(MplPath(cen_poly), facecolor=(0.8, 0.4, 0.4), lw=0, alpha=1, zorder=2)
     ax.add_patch(cen_patch)
 
     chr_move, chr_poly = zip(
         *outline,
         strict=True,
     )
-    chr_patch = PathPatch(MplPath(chr_poly, chr_move), fill=None, joinstyle="round")
+    chr_patch = PathPatch(MplPath(chr_poly, chr_move), fill=None, joinstyle="round", alpha=1, zorder=2)
     ax.add_patch(chr_patch)
 
     # If start and stop positions are provided, draw a rectangle to highlight this region
@@ -248,10 +248,13 @@ def plot_ideogram(
             r = Rectangle(
                 (x0, y0),  # +0.01 should shift us off outline of chromosome
                 width=width,
-                height=0.94,
-                fill=True,
+                height=height,
+                fill=kwargs.get("fill", True),
                 color=r_colour,
                 joinstyle="round",
+                zorder=3,
+                alpha=kwargs.get("alpha", 0.5),
+                lw=kwargs.get("lw", 1),
             )
             ax.add_patch(r)
 
@@ -269,10 +272,10 @@ def plot_ideogram(
     if y_label is not None:
         if vertical == Orientation.VERTICAL:
             y0, _y1 = ax.get_ylim()
-            ax.text(0.5, y0, y_label, fontsize="x-large", va="bottom", ha="center", rotation=90)
+            ax.text(0.5, y0, y_label, fontsize=kwargs.get("fontsize", "x-large"), va="bottom", ha="center", rotation=90)
         else:
             x0, _x1 = ax.get_xlim()
-            ax.text(x0, 1, y_label, fontsize="x-large", va="bottom")
+            ax.text(x0, 1, y_label, fontsize=kwargs.get("fontsize", "x-large"), va="bottom")
 
     return ax
 

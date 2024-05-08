@@ -85,7 +85,7 @@ def test_23_vertical_chm13_regions():
     genome = GENOME.CHM13
     fig, axes = plt.subplots(ncols=24, nrows=1, figsize=(15, 25), facecolor="white", sharey=True)
 
-    per_chr_regions = {"chr1": [(0, 1000000, "black"), (20_000_000, 25_000_000, "red")]}
+    per_chr_regions = {"chr1": [(0, 1000000, "black"), (20_000_000, 35_000_000, "red")]}
     for ax, i in zip(axes, chain(range(1, 23), iter("XY")), strict=True):
         regions = per_chr_regions.get(f"chr{i}")
         _ax = plot_ideogram(
